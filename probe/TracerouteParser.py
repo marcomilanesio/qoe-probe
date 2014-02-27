@@ -101,7 +101,7 @@ class TracerouteParser():
 
 
 if __name__ == "__main__":
-    mtrfile = "./../temp_files/173.194.35.31.mtr"
+    mtrfile = "./173.194.35.31.mtr"
     t = TracerouteParser("173.194.35.31")    
     t.parse_mtrfile(mtrfile)
     res = t.get_results()

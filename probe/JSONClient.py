@@ -35,9 +35,9 @@ class JSONClient():
         self.srv_ip = config.get_jsonserver_configuration()['ip']
         self.srv_port = int(config.get_jsonserver_configuration()['port'])
         self.db = DBClient(config)
-        self.clientid = self.__get_client_id_from_db()
+        self.clientid = self._get_client_id_from_db()
     
-    def __get_client_id_from_db(self):
+    def _get_client_id_from_db(self):
         q = 'select distinct on (clientID) clientID from %s ' % self.rawtable
         r = self.db.execute_query(q)
         assert len(r) == 1
@@ -47,7 +47,7 @@ class JSONClient():
         query = 'select * from %s where not sent' % self.activetable
         res = self.db.execute_query(query)
         sids = list(set([r[0] for r in res]))
-        local_data = {'clientid': self.clientid, 'local': self.__prepare_local_data(sids)}
+        local_data = {'clientid': self.clientid, 'local': self._prepare_local_data(sids)}
         str_to_send = "local: " + json.dumps(local_data)
         logger.info('sending local data... %s' % self.send_to_srv(str_to_send, is_json=True))
         for row in res:
@@ -84,7 +84,7 @@ class JSONClient():
             logger.info('updated sent sid on %s' % self.activetable)
     
     
-    def __prepare_local_data(self, sids):
+    def _prepare_local_data(self, sids):
         l = LocalDiagnosisManager(self.db, self.clientid, sids)
         return l.do_local_diagnosis()
         
@@ -111,9 +111,11 @@ class JSONClient():
 
         
 if __name__ == '__main__':
-    #data = {'prova':1, 'prova2':2}
-    conf_file='../probe.conf'
-    url = 'www.google.com'
+    import sys
+    conf_file = sys.argv[1]
+    url = sys.argv[2]
+    #conf_file='../probe.conf'
+    #url = 'www.google.com'
     c = Configuration(conf_file)
     j = JSONClient(c)
     print j.send_request_for_diagnosis(url, 6)
