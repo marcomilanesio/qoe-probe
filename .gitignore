@@ -1,6 +1,6 @@
 *.pyc
 *.log
-.clean_all_debug.sh
+clean_all_debug.sh
 probe/runActiveMonitor
 probe/firefox
 temp_files
