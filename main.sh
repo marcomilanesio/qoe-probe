@@ -14,7 +14,6 @@ if ! [[ $2 =~ $re ]] ; then
    exit 1;
 fi
 
-
 TMP_FILE='/tmp/plugin_test.out' #dump_db.js
 BKP_FOLDER_HOME='./session_bkp'
 
