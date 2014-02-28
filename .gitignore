@@ -6,3 +6,4 @@ probe/firefox
 temp_files
 session_bkp
 mplane.conf
+url.list
