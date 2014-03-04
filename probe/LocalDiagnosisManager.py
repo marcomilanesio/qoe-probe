@@ -54,19 +54,21 @@ class LocalDiagnosisManager():
         when get_sent>'1970-01-01 12:00:00' then get_sent else request_event_ts end as obj_start, 
         case when endtime>'1970-01-01 12:00:00' then endtime 
         when first_bytes>'1970-01-01 12:00:00' then first_bytes else request_event_ts end as obj_end, 
-        http_id, host from %s where sid=%d and if_complete_cache>-1 )t
+        http_id, host from %s where sid=%d and if_complete_cache>-1 and full_load_time > -1)t
         '''% (self.dbconn.get_table_names()['raw'], sid)
 
         res = self.dbconn.execute_query(q)
-        idle_time = 0.0
         session_start = str(res[0][0]) # convert datetime to string for being json-serializable
         rel_starts = [r[5] for r in res]
         rel_ends = [r[6] for r in res]
-        for i in range(len(rel_starts)-1):
-            if rel_starts[i+1] > rel_ends[i]:
-                idle_time += (rel_starts[i+1] - rel_ends[i])
-            else:
-                continue
+        
+        idle_time = 0.0
+        end = rel_ends[0]
+        for i in range(1, len(rel_starts)):
+            if rel_starts[i] > end:
+                idle_time += rel_starts[i] - end
+            end = rel_ends[i]
+        
         return session_start, idle_time #msec
     
     def __getHttpResponseTime(self, sid):
