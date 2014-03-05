@@ -32,17 +32,17 @@ class LocalDiagnosisManager():
     def do_local_diagnosis(self):
         res = {}
         for sid in self.sids:
-            session_start, idletime = self.__getClientIdleTime(sid)
-            httpresp = self.__getHttpResponseTime(sid)
-            pagedown = self.__getPageDownloadingTime(sid)
-            dnsresp = self.__getDNSResponseTime(sid)
-            tcpresp = self.__getTCPResponseTime(sid)
-            pagedim = self.__getPageDimension(sid)
-            osstats = self.__getOSStats(sid)
+            session_start, idletime = self._getClientIdleTime(sid)
+            httpresp = self._getHttpResponseTime(sid)
+            pagedown = self._getPageDownloadingTime(sid)
+            dnsresp = self._getDNSResponseTime(sid)
+            tcpresp = self._getTCPResponseTime(sid)
+            pagedim = self._getPageDimension(sid)
+            osstats = self._getOSStats(sid)
             res[str(sid)] = {'idle': idletime, 'http':httpresp, 'tcp':tcpresp,'tot':pagedown,'dns':dnsresp,'dim':pagedim, 'osstats': osstats, 'start':session_start}
         return res
          
-    def __getClientIdleTime(self, sid):
+    def _getClientIdleTime(self, sid):
         #large_load_time = self.__getLargeLoadTime()
         q = '''select session_start, obj_start, obj_end, http_id, host,
         extract(minute from obj_start-session_start)*60*1000+extract(millisecond from obj_start-session_start) as relative_start, 
@@ -71,7 +71,7 @@ class LocalDiagnosisManager():
         
         return session_start, idle_time #msec
     
-    def __getHttpResponseTime(self, sid):
+    def _getHttpResponseTime(self, sid):
         q = 'select app_rtt from %s where sid = %d and full_load_time > -1' % (self.dbconn.get_table_names()['raw'], sid)
         res = self.dbconn.execute_query(q)
         app_rtts = [r[0] for r in res]
@@ -81,7 +81,7 @@ class LocalDiagnosisManager():
             #print Utils.computeQuantile(app_rtts, 0.5)
             return sum(app_rtts)/float(len(app_rtts))
 
-    def __getPageDownloadingTime(self, sid):
+    def _getPageDownloadingTime(self, sid):
         q = 'select distinct full_load_time from %s where sid = %d and full_load_time > -1 group by full_load_time' % (self.dbconn.get_table_names()['raw'], sid)
         res = self.dbconn.execute_query(q)
         if len(res) == 0:
@@ -89,14 +89,14 @@ class LocalDiagnosisManager():
         else:
             return float(res[0][0]) #msec
 
-    def __getDNSResponseTime(self, sid):
+    def _getDNSResponseTime(self, sid):
         q = 'select remoteaddress, dns_time from %s where sid = %d and dns_time > 0 and full_load_time > -1' % (self.dbconn.get_table_names()['raw'], sid)
         res = self.dbconn.execute_query(q)
         #resolved_ips = [r[0] for r in res]
         dns_times = [float(r[1]) for r in sorted(res, key=lambda time: time[1])]
         return sum(dns_times) #msec
 
-    def __getTCPResponseTime(self, sid):
+    def _getTCPResponseTime(self, sid):
         q = 'select tcp_cnxting from %s where sid = %d and full_load_time > -1' % (self.dbconn.get_table_names()['raw'], sid)
         res = self.dbconn.execute_query(q)
         tcp_times = [r[0] for r in res]
@@ -106,7 +106,7 @@ class LocalDiagnosisManager():
             return sum(tcp_times) / float(len(tcp_times)) #msec
 
 
-    def __getPageDimension(self, sid):
+    def _getPageDimension(self, sid):
         q =  'SELECT sum(http_header_bytes+http_body_bytes) as netw_bytes, count(*) as nr_netw_obj from %s where sid = %d and full_load_time > -1' % (self.dbconn.get_table_names()['raw'], sid)
         res = self.dbconn.execute_query(q)
         assert len(res) == 1
@@ -117,12 +117,14 @@ class LocalDiagnosisManager():
             tot_bytes = 0
         return tot_bytes
 
-    def __getOSStats(self,sid):
+    def _getOSStats(self,sid):
         q = "select distinct on(cpu_percent_ffx, mem_percent_ffx) cpu_percent_ffx, mem_percent_ffx from %s where sid = %d" % (self.dbconn.get_table_names()['raw'], sid)
         res = self.dbconn.execute_query(q)
-        assert len(res) == 1
-        if res[0] != (None,):
-            return (float(res[0][0]), float(res[0][1]))
-        else:
+        if len(res) != 1:
+            logger.error('multiple sessions with sid = %d' % sid)
             return (-1,-1)
-
+        else:
+            if res[0] != (None,):
+                return (float(res[0][0]), float(res[0][1]))
+            else:
+                return (-1,-1)
