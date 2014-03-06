@@ -143,3 +143,14 @@ class DBClient:
     def get_table_names(self):
         return {'raw': self.dbconfig['rawtable'] ,'active': self.dbconfig['activetable']}
 
+    def force_update_full_load_time(self, sid):
+        import datetime
+        q = '''select session_start, endtime from %s where sid = %d''' % (self.dbconfig['rawtable'], sid)
+        res = self.execute_query(q)
+        session_start = list(set([x[0] for x in res]))[0]
+        end_time = max(list(set([x[1] for x in res])))
+        forced_load_time = int((end_time - session_start).total_seconds() * 1000)
+        update = '''update %s set full_load_time = %d where sid = %d''' % (self.dbconfig['rawtable'], forced_load_time, sid)
+        self.execute_update( update )
+        return forced_load_time
+        

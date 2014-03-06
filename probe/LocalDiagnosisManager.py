@@ -42,22 +42,36 @@ class LocalDiagnosisManager():
             res[str(sid)] = {'idle': idletime, 'http':httpresp, 'tcp':tcpresp,'tot':pagedown,'dns':dnsresp,'dim':pagedim, 'osstats': osstats, 'start':session_start}
         return res
          
-    def _getClientIdleTime(self, sid):
-        #large_load_time = self.__getLargeLoadTime()
+    def _execute_obj_start_end_query(self, sid, full_load_time = True):
         q = '''select session_start, obj_start, obj_end, http_id, host,
-        extract(minute from obj_start-session_start)*60*1000+extract(millisecond from obj_start-session_start) as relative_start, 
-        extract(minute from obj_end-session_start)*60*1000+extract(millisecond from obj_end-session_start) as relative_end 
-        from 
-        (SELECT session_start, 
-        case when dns_start>'1970-01-01 12:00:00' and dns_start<syn_start and dns_start<get_sent then dns_start 
-        when syn_start>'1970-01-01 12:00:00' and syn_start<get_sent then syn_start 
-        when get_sent>'1970-01-01 12:00:00' then get_sent else request_event_ts end as obj_start, 
-        case when endtime>'1970-01-01 12:00:00' then endtime 
-        when first_bytes>'1970-01-01 12:00:00' then first_bytes else request_event_ts end as obj_end, 
-        http_id, host from %s where sid=%d and if_complete_cache>-1 and full_load_time > -1)t
-        '''% (self.dbconn.get_table_names()['raw'], sid)
-
+            extract(minute from obj_start-session_start)*60*1000+extract(millisecond from obj_start-session_start) as relative_start, 
+            extract(minute from obj_end-session_start)*60*1000+extract(millisecond from obj_end-session_start) as relative_end 
+            from 
+            (SELECT session_start, 
+            case when dns_start>'1970-01-01 12:00:00' and dns_start<syn_start and dns_start<get_sent then dns_start 
+            when syn_start>'1970-01-01 12:00:00' and syn_start<get_sent then syn_start 
+            when get_sent>'1970-01-01 12:00:00' then get_sent else request_event_ts end as obj_start, 
+            case when endtime>'1970-01-01 12:00:00' then endtime 
+            when first_bytes>'1970-01-01 12:00:00' then first_bytes else request_event_ts end as obj_end, 
+            http_id, host from %s where sid=%d and if_complete_cache>-1
+            ''' % (self.dbconn.get_table_names()['raw'], sid)
+        
+        if full_load_time:
+            q += ' and full_load_time > -1)t'
+        else:
+            q += ')t'
+        
         res = self.dbconn.execute_query(q)
+        return res
+    
+    def _getClientIdleTime(self, sid):
+        res = self._execute_obj_start_end_query(sid)
+        if len(res) == 0:
+            logger.warning('sid %d, probe %d : full_load_time = -1' % (sid, self.clientid))
+            res = self._execute_obj_start_end_query(sid, full_load_time = False)
+            logger.warning('sid %d, probe %d : with no check on full_load_time, found %d objects' % (sid, self.clientid, len(res)))
+            new_full_load_time = self.dbconn.force_update_full_load_time(sid)
+            logger.warning('sid %d, probe %d : forced full_load_time = %d ' % (sid, self.clientid, new_full_load_time))
         session_start = str(res[0][0]) # convert datetime to string for being json-serializable
         rel_starts = [r[5] for r in res]
         rel_ends = [r[6] for r in res]
