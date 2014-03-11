@@ -10,13 +10,15 @@ from probe.DBClient import DBClient
 logging.config.fileConfig('probe/logging.conf')
 
 if __name__ == '__main__':
-    if len(sys.argv) < 3:
-        exit("Usage: %s %s %s" % (sys.argv[0], 'nr_runs', 'conf_file'))
+    if len(sys.argv) < 4:
+        exit("Usage: %s %s %s %s" % (sys.argv[0], 'nr_runs', 'conf_file', 'backup folder'))
     nun_runs = int(sys.argv[1])
     conf_file = sys.argv[2]
+    backupdir = sys.argv[3]
     logger = logging.getLogger('probe')
     config = Configuration(conf_file)
     plugin_out_file = config.get_database_configuration()['pluginoutfile']
+    logger.debug('Backup dir set at: %s' % backupdir)
     ff_launcher = FFLauncher(config)
     dbcli = DBClient(config)
     dbcli.create_tables()
@@ -28,6 +30,7 @@ if __name__ == '__main__':
             exit("Plugin outfile missing.")
         dbcli.load_to_db(stats)
         logger.debug('Ended browsing run n.%d' % i)
-        os.rename(plugin_out_file, plugin_out_file + '.run%d' % i)
-        logger.debug('Saved plugin file for run n.%d' % i)
+        new_fn = backupdir + '/' + plugin_out_file.split('/')[-1] + '.run%d' % i
+        os.rename(plugin_out_file, new_fn)
+        logger.debug('Saved plugin file for run n.%d: %s' % (i,new_fn))
         

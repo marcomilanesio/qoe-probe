@@ -36,8 +36,7 @@ then
 	exit 1 
 fi
 
-/usr/bin/python probe.py $nr_firefox_runs $conf_file
-mv $TMP_FILE* $BKP_FOLDER/
+/usr/bin/python probe.py $nr_firefox_runs $conf_file $BKP_FOLDER
 ./probe/runActiveMonitor probe/ActiveMonitor.py $conf_file
 mv *.mtr $BKP_FOLDER/
 mv *.trace $BKP_FOLDER/
