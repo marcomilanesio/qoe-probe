@@ -16,6 +16,12 @@ fi
 
 TMP_FILE=/tmp/plugin_test.out #dump_db.js
 BKP_FOLDER_HOME=./session_bkp
+if [ ! -f $TMP_FILE ]; 
+then
+    touch $TMP_FILE
+else
+    cat /dev/null > $TMP_FILE
+fi
 
 if [ ! -d "$BKP_FOLDER_HOME" ]; then
 	mkdir $BKP_FOLDER_HOME
