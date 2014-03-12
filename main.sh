@@ -32,8 +32,6 @@ BKP_FOLDER=$BKP_FOLDER_HOME/$NOW
 
 mkdir $BKP_FOLDER
 
-
-
 ffxId=`pgrep firefox`
 if [[ $ffxId ]]
 then
@@ -45,5 +43,5 @@ fi
 /usr/bin/python probe.py $nr_firefox_runs $conf_file $BKP_FOLDER
 ./probe/runActiveMonitor probe/ActiveMonitor.py $conf_file
 mv *.mtr $BKP_FOLDER/
-mv *.trace $BKP_FOLDER/
+mv *.trace_* $BKP_FOLDER/
 echo "Done."
