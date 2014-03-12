@@ -19,6 +19,7 @@
 # this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import json
+import fileinput
 
 # quantile in (0,1)
 def compute_quantile(data, quantile):
@@ -50,3 +51,10 @@ def read_file(filename, separator):
             print line
             continue
     return rows
+
+
+def pack_files(filenames, outfilename):
+    with open(outfilename, 'w') as fout:
+        for line in fileinput.input(filenames):
+            fout.write(line)
+    return outfilename
