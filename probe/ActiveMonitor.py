@@ -18,6 +18,7 @@
 # this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import subprocess
+import threading
 import sys
 import socket
 import struct
@@ -37,10 +38,10 @@ class ActiveMonitor():
     def __init__(self, config):
         self.raw_table_name = config.get_database_configuration()['rawtable']
         self.db = DBClient(config)
-        self.session_dic = self.__get_inserted_sid_addresses()
+        self.session_dic = self._get_inserted_sid_addresses()
         logger.debug('Loaded %d sessions.' % len(self.session_dic.keys()))
         
-    def __get_inserted_sid_addresses(self):
+    def _get_inserted_sid_addresses(self):
         result = {}
         q = "select distinct on (sid, session_url, remoteaddress) sid, session_url, remoteaddress FROM %s where sid not in (select distinct sid from active)" % (self.raw_table_name)
         res = self.db.execute_query(q)
@@ -58,7 +59,7 @@ class ActiveMonitor():
                     result[cur_sid]['address'].append(cur_addr)
             else:
                 result[cur_sid] = {'url': cur_url, 'address' : [cur_addr]}
-        #print 'result __get_inserted_sid_addresses', result
+        #print 'result _get_inserted_sid_addresses', result
         return result
 
 
@@ -69,6 +70,10 @@ class ActiveMonitor():
         result = {}
         t = TracerouteParser(target)
         t.parse_traceroutefile(tracefile)
+        try:
+            os.remove(tracefile) # remove packed trace file as root
+        except OSError, e:
+            logger.error('Error in removing packed tracefile %s' % tracefile)
         t.parse_mtrfile(mtrfile)
         return json.dumps(t.get_results())
 
@@ -86,44 +91,55 @@ class ActiveMonitor():
             logger.error('Unable to map float in do_ping [%s]' % out.strip())
             #print 'Error in Active monitor: unable to map float in do_ping: ', out
         return json.dumps({'min': rttmin, 'max':rttmax, 'avg':rttavg, 'std':rttmdev})
-
+    
+    
+    def _execute(self, c, outfilename):
+        outfile = open(outfilename, 'w')
+        traceroute = subprocess.Popen(c, stdout=outfile, stderr=subprocess.PIPE)
+        _, err = traceroute.communicate()
+        if err:
+            logger.error( "Error in: %s" % c )
+        logger.debug('command executed [%s]' % c)
+        outfile.close()
+    
     def do_traceroute(self, target, maxttl=32):
         trace_udp = "traceroute -n -m %d %s" % (maxttl, target)
         trace_tcpsyn = "traceroute -n -T -m %d %s" % (maxttl, target)
         trace_icmp = "traceroute -n -I -m %d %s" % (maxttl, target)
         trace_mtr = "mtr -n --report --report-cycles 20 %s" % target
-        
-        if os.geteuid() != 0:
-            logger.warning("You're not root - Using only UDP traceroute.")
-            cmds = [trace_udp]
-        else:
-            cmds = [trace_udp, trace_tcpsyn, trace_icmp]
-        tracefile = target + ".trace"
-        outfile = open(tracefile, "w")
-        
+        cmds = [trace_udp,trace_tcpsyn,trace_icmp,trace_mtr]
+        traceroute_fnames = []
+        mtrfilename = '%s.mtr' % target
+        thread_list = []
+        i = 0
         for cmd in cmds:
             cmdline = cmd.split(" ")
-            traceroute = subprocess.Popen(cmdline, stdout=outfile, stderr=subprocess.PIPE)
-            _, err = traceroute.communicate()
-            if err:
-                logger.error("Error in: %s" % cmd)
-                continue
-            logging.info('traceroute executed [%s]' % cmd)
-        
-        outfile.write("\n")
-        outfile.close()
-        
-        mtrfile = target + ".mtr"
-        mtroutfile = open(mtrfile, 'w')
-        mtr = subprocess.Popen(trace_mtr.split(" "), stdout=mtroutfile, stderr=subprocess.PIPE)
-        _, err = mtr.communicate()
-        if err:
-            logger.error("Error in: %s" % trace_mtr)
-        logging.info('traceroute executed [%s]' % trace_mtr)
-        
-        mtroutfile.close()
-        return self.build_trace(target, tracefile, mtrfile)
+            i += 1
+            if cmdline[0] == 'traceroute':
+                if re.match('-T', cmdline[2]):
+                    protocol = 'tcpsyn'
+                elif re.match('-I', cmdline[2]):
+                    protocol = 'icmp'
+                else:
+                    protocol = 'udp'
+                fname = '%s.trace_%s' % (target, protocol)
+                traceroute_fnames.append(fname)
+            else:
+                fname = mtrfilename
+                
+            t = threading.Thread(target=self._execute, args=(cmdline,fname,))
+            thread_list.append(t)
+            
+        for thread in thread_list:
+            thread.start()
 
+        for thread in thread_list:
+            logger.debug(thread.join())
+
+        logger.info('Traceroute to %s terminated' % target)
+        tracefilename = Utils.pack_files( traceroute_fnames, target + '.trace')
+        return self.build_trace(target, tracefilename, mtrfilename)
+        
     def do_probe(self):
         tot_active_measurement = {}
         for sid, url_addr in self.session_dic.iteritems():
@@ -139,7 +155,6 @@ class ActiveMonitor():
         self.db.insert_active_measurement(tot_active_measurement)
         logger.info('ping and traceroute saved into db.') 
             
-        
         
 def main(conf_file):
     config = Configuration(conf_file)
