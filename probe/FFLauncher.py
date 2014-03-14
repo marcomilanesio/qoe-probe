@@ -39,14 +39,14 @@ class FFLauncher():
             k = 'http://%s/' % line.strip()
             self.osstats[k] = {'mem': 0.0, 'cpu': 0.0}
             SLICE_IN_SECONDS = 1
-            cmdstr = "%s/firefox -P %s -url %s" % (self.ffconfig['dir'], self.ffconfig['profile'], line)
+            cmdstr = "xvfb-run %s/firefox -P %s -url %s" % (self.ffconfig['dir'], self.ffconfig['profile'], line)
             proc = subprocess.Popen(cmdstr.split(), stdout=out, stderr=subprocess.PIPE)
-            p = psutil.Process(proc.pid)
             memtable = []
             cputable = []
             while proc.poll() == None:
-                memtable.append(p.get_memory_percent())
-                cputable.append(p.get_cpu_percent(interval=0))
+                arr = psutil.cpu_percent(interval=0.1,percpu=True)
+                cputable.append(sum(arr) / float(len(arr)))
+                memtable.append(psutil.virtual_memory().percent)
                 time.sleep(SLICE_IN_SECONDS)
             self.osstats[k]['mem'] = float(sum(memtable) / len(memtable))
             self.osstats[k]['cpu'] = float(sum(cputable) / len(cputable))
