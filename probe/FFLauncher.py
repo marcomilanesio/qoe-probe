@@ -39,7 +39,7 @@ class FFLauncher():
             k = 'http://%s/' % line.strip()
             self.osstats[k] = {'mem': 0.0, 'cpu': 0.0}
             SLICE_IN_SECONDS = 1
-            cmdstr = "xvfb-run %s/firefox -P %s -url %s" % (self.ffconfig['dir'], self.ffconfig['profile'], line)
+            cmdstr = "xvfb-run --wait=0 %s/firefox -P %s -url %s" % (self.ffconfig['dir'], self.ffconfig['profile'], line)
             proc = subprocess.Popen(cmdstr.split(), stdout=out, stderr=subprocess.PIPE)
             memtable = []
             cputable = []
