@@ -1,5 +1,5 @@
 qoe-probe
 =========
 
-mplane qoe probe 
+mplane qoe probe phantomjs
 
