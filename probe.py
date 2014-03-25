@@ -5,6 +5,7 @@ import logging
 import logging.config
 from probe.Configuration import Configuration
 from probe.FFLauncher import FFLauncher
+from probe.PJSLauncher import PJSLauncher
 from probe.DBClient import DBClient
 
 logging.config.fileConfig('probe/logging.conf')
@@ -19,13 +20,15 @@ if __name__ == '__main__':
     config = Configuration(conf_file)
     plugin_out_file = config.get_database_configuration()['pluginoutfile']
     logger.debug('Backup dir set at: %s' % backupdir)
-    ff_launcher = FFLauncher(config)
+    #ff_launcher = FFLauncher(config)
+    pjs_launcher = PJSLauncher(config)
     dbcli = DBClient(config)
     dbcli.create_tables()
     logger.debug('Starting nr_runs (%d)' % nun_runs)
     for i in range(nun_runs):
-        stats = ff_launcher.browse_urls()
-        if not os.path.exists(plugin_out_file):
+        stats = pjs_launcher.browse_urls()
+        #stats = ff_launcher.browse_urls()
+	if not os.path.exists(plugin_out_file):
             logger.error('Plugin outfile missing.')
             exit("Plugin outfile missing.")
         dbcli.load_to_db(stats)

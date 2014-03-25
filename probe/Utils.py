@@ -39,6 +39,20 @@ def __file_to_array(filename, separator):
     fileobj.close()
     return str_.split(separator)
 
+#Parse HAR file to json.
+def read_harfile(filename, separator):
+    # add HarParsing
+    strarray = __file_to_array(filename, separator)
+    rows = []
+    for line in strarray:
+        try:
+            jsonstring = json.loads(line)
+            rows.append(jsonstring)
+        except ValueError:
+            print line
+	    continue
+    return rows
+
 #Read json formatted file.
 def read_file(filename, separator):
     strarray = __file_to_array(filename, separator)
@@ -49,7 +63,7 @@ def read_file(filename, separator):
             rows.append(jsonstring)
         except ValueError:
             print line
-            continue
+	    continue
     return rows
 
 
