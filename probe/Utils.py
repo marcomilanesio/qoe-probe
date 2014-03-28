@@ -20,6 +20,7 @@
 #
 import json
 import fileinput
+import Parser
 
 # quantile in (0,1)
 def compute_quantile(data, quantile):
@@ -39,10 +40,10 @@ def __file_to_array(filename, separator):
     fileobj.close()
     return str_.split(separator)
 
-#Parse HAR file to json.
-def read_harfile(filename, separator):
-    # add HarParsing
-    strarray = __file_to_array(filename, separator)
+
+#Read tstat logfile and match it by HAR file
+def read_tstatlog(tstalogfile, harfile, separator):
+    strarray = Parser.parseTstat(tstalogfile, separator)
     rows = []
     for line in strarray:
         try:
@@ -51,7 +52,9 @@ def read_harfile(filename, separator):
         except ValueError:
             print line
 	    continue
-    return rows
+    full_rows = Parser.updatebyHar(rows, harfile)
+    return full_rows
+        
 
 #Read json formatted file.
 def read_file(filename, separator):
@@ -64,6 +67,7 @@ def read_file(filename, separator):
         except ValueError:
             print line
 	    continue
+    #rows = Parser.updatebyHar(rows)
     return rows
 
 

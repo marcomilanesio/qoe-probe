@@ -79,14 +79,17 @@ class DBClient:
                      int(obj["rcv"]), int(obj["onLoad"]), int(obj["onContent"]), int(obj["tabId"]), str(obj["wifi"]), str(obj["CPUidle"]), \
                      str(cpu_perc), str(obj["MEMfree"]), str(obj["MEMused"]), str(mem_perc), str(obj["pingGW"]), str(obj["pingDNS"]), \
                      str(obj["pingG"]), int(obj["AnnoyNr"]), str(obj["location"]), int(obj["IfAborted"]), int(obj["ID"]), str(obj["cmt"]))
+	    print state
             cursor.execute(state)
             self.conn.commit()
         sid_inserted = self._generate_sid_on_table()
         
 
     def load_to_db(self, stats):
-        datalist = Utils.read_file(self.dbconfig['pluginoutfile'], "\n")
-        if len(datalist) > 0:
+        #datalist = Utils.read_file(self.dbconfig['pluginoutfile'], "\n")
+	datalist = Utils.read_tstatlog(self.dbconfig['tstatfile'], self.dbconfig['harfile'], "\n")
+	#print datalist        	
+	if len(datalist) > 0:
             self.write_plugin_into_db(datalist, stats)
 
     def execute_query(self, query):

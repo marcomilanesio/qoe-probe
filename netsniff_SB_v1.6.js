@@ -68,7 +68,9 @@ function createHAR(address, title, startTime, elaspedTime, resources)
 
         entries.push({
             startedDateTime: request.time.toISOString(),
-            time: endReply.time - request.time,
+            TimeToFirstByte: startReply.time.toISOString(),
+            endtimeTS: endReply.time.toISOString(),
+	    time: endReply.time - request.time,
             request: {
                 method: request.method,
                 url: request.url,
@@ -246,7 +248,7 @@ if (system.args.length === 1) {
 		//timestamp = new Date().toISOString();
 		timestamp = new Date().getTime();
 		//Writing Har file		
-		f = fs.open("/tmp/session.har", "w");
+		f = fs.open("/tmp/session/session.har", "w");
                 f.writeLine(JSON.stringify(har, undefined, 4));
 		//f.writeLine(JSON.stringify(har, undefined));
                 f.close();

@@ -41,7 +41,7 @@ then
 fi
 
 /usr/bin/python probe.py $nr_firefox_runs $conf_file $BKP_FOLDER
-#./probe/runActiveMonitor probe/ActiveMonitor.py $conf_file
-#mv *.mtr $BKP_FOLDER/
-#mv *.trace_* $BKP_FOLDER/
+./probe/runActiveMonitor probe/ActiveMonitor.py $conf_file
+mv *.mtr $BKP_FOLDER/
+mv *.trace_* $BKP_FOLDER/
 echo "Done."
