@@ -18,6 +18,7 @@ if __name__ == '__main__':
     backupdir = sys.argv[3]
     logger = logging.getLogger('probe')
     config = Configuration(conf_file)
+    #plugin_out_file = config.get_database_configuration()['pluginoutfile']
     plugin_out_file = config.get_database_configuration()['tstatfile']
     harfile = config.get_database_configuration()['harfile']
     logger.debug('Backup dir set at: %s' % backupdir)
