@@ -37,6 +37,9 @@ class Configuration():
     def get_phantomjs_configuration(self):
         return self.__extract_values_to_dictionary(self.config.items('phantomjs'))
 
+    def get_tstat_configuration(self):
+        return self.__extract_values_to_dictionary(self.config.items('tstat'))
+
     def get_firefox_configuration(self):
         return self.__extract_values_to_dictionary(self.config.items('firefox'))
     

@@ -40,8 +40,13 @@ then
 	exit 1 
 fi
 
-/usr/bin/python probe.py $nr_firefox_runs $conf_file $BKP_FOLDER
-./probe/runActiveMonitor probe/ActiveMonitor.py $conf_file
-mv *.mtr $BKP_FOLDER/
-mv *.trace_* $BKP_FOLDER/
+./probe/runTstatLiveCapture probe/TstatLiveCapture.py start $conf_file
+sleep 5
+./probe/runTstatLiveCapture probe/TstatLiveCapture.py stop $conf_file
+sleep 5
+./probe/runTstatLiveCapture probe/TstatLiveCapture.py ciao $conf_file
+#/usr/bin/python probe.py $nr_firefox_runs $conf_file $BKP_FOLDER
+#./probe/runActiveMonitor probe/ActiveMonitor.py $conf_file
+#mv *.mtr $BKP_FOLDER/
+#mv *.trace_* $BKP_FOLDER/
 echo "Done."
