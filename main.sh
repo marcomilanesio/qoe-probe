@@ -41,12 +41,14 @@ then
 fi
 
 ./probe/runTstatLiveCapture probe/TstatLiveCapture.py start $conf_file
-sleep 5
-./probe/runTstatLiveCapture probe/TstatLiveCapture.py stop $conf_file
-sleep 5
-./probe/runTstatLiveCapture probe/TstatLiveCapture.py ciao $conf_file
-#/usr/bin/python probe.py $nr_firefox_runs $conf_file $BKP_FOLDER
-#./probe/runActiveMonitor probe/ActiveMonitor.py $conf_file
-#mv *.mtr $BKP_FOLDER/
-#mv *.trace_* $BKP_FOLDER/
+sleep 2
+/usr/bin/python probe.py $nr_firefox_runs $conf_file $BKP_FOLDER
+tstatId=`pgrep tstat`
+if [[ $tstatId ]]
+then
+        ./probe/runTstatLiveCapture probe/TstatLiveCapture.py $(printf $tstatId) $conf_file
+fi
+./probe/runActiveMonitor probe/ActiveMonitor.py $conf_file
+mv *.mtr $BKP_FOLDER/
+mv *.trace_* $BKP_FOLDER/
 echo "Done."

@@ -145,7 +145,7 @@ def updatebyHar(tstatdata,filename):
 	json_data.close()	
 	
     except:
-	print tstatdata
+	#print tstatdata
 	pass
     return tstatdata
 

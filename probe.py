@@ -18,7 +18,8 @@ if __name__ == '__main__':
     backupdir = sys.argv[3]
     logger = logging.getLogger('probe')
     config = Configuration(conf_file)
-    plugin_out_file = config.get_database_configuration()['pluginoutfile']
+    plugin_out_file = config.get_database_configuration()['tstatfile']
+    harfile = config.get_database_configuration()['harfile']
     logger.debug('Backup dir set at: %s' % backupdir)
     #ff_launcher = FFLauncher(config)
     pjs_launcher = PJSLauncher(config)
@@ -34,6 +35,8 @@ if __name__ == '__main__':
         dbcli.load_to_db(stats)
         logger.debug('Ended browsing run n.%d' % i)
         new_fn = backupdir + '/' + plugin_out_file.split('/')[-1] + '.run%d' % i
-        os.rename(plugin_out_file, new_fn)
+        new_har = backupdir + '/' + harfile.split('/')[-1] + '.run%d' % i
+	os.rename(plugin_out_file, new_fn)
+	os.rename(harfile, new_har)
         logger.debug('Saved plugin file for run n.%d: %s' % (i,new_fn))
         

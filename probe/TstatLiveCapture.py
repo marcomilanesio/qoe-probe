@@ -18,6 +18,7 @@
 # this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 import subprocess
+import signal
 import threading
 import sys
 import socket
@@ -36,33 +37,36 @@ import logging.config
 class TstatLiveCapture():
     def __init__(self, config):
         self.tstatconfig = config.get_tstat_configuration()
-        self.tstatpid = 0
+        #self.tstatpid = 0
         logger.debug('Loaded configuration')
 
     def start(self):
 	logger.info('Starting Tstat Live Capture')
 	out = open(self.tstatconfig['logfile'], 'a')
-	# sudo ./tstat/tstat -i eth2  -l -u -E 1500 -N tstat-conf/net.conf -s /home/linaro/
 	cmdstr = "%s/tstat/tstat -i %s -l -u -E 1500 -N %s -s %s" % (self.tstatconfig['dir'], self.tstatconfig['netinterface'], 
-								self.tstatconfig['netfile'], self.tstatconfig['logfolder'])
-	logger.info(cmdstr)
+								self.tstatconfig['netfile'], self.tstatconfig['tstatout'])
+	#logger.info(cmdstr)
 	proc = subprocess.Popen(cmdstr.split(), stdout=out, stderr=subprocess.PIPE)
-
-    def stop(self):
-	logger.info('Stopping Tstat Live Capture')
+	logger.info('Tstat is running, PID = ' + str(proc.pid))
+	
+    def stop(self, pid):
+	logger.info('Stopping Tstat Live Capture, PID = ' + pid)
+	os.kill(int(pid), signal.SIGTERM)
+	
 
 def main(conf_file):
     config = Configuration(conf_file)
     tstat = TstatLiveCapture(config)
+    
     if sys.argv[1] == "start":
 	tstat.start()
-    elif sys.argv[1] == "stop":
-	tstat.stop()
+    #elif sys.argv[1] == "stop":
+#	tstat.stop()
     else:
-	logger.debug('Wrong command ! Only "start" or "stop" are accepted')
-    logger.info('Probing starting...')
-    #cli = JSONClient(config)
-    #cli.prepare_and_send()
+	#logger.debug('Wrong command ! Only "start" or "stop" are accepted')
+	tstat.stop(sys.argv[1])
+    #logger.info('Probing starting...')
+    
     
 if __name__ == "__main__":
     if len(sys.argv) != 3:

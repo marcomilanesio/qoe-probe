@@ -65,10 +65,11 @@ class DBClient:
         #insert a directory into the db
         cursor = self.conn.cursor()
         for obj in datalist:
-            mem_perc = stats[str(obj["pageURL"])]['mem']
-            cpu_perc = stats[str(obj["pageURL"])]['cpu']
-            state = '''INSERT INTO %s VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', %d, '%s', '%s', '%s', '%s', %d, '%s', 
-            '%s', %d, '%s', %d, '%s', %d, %d, %d, %d, %d, %d, '%s', %d, '%s', %d, '%s', %d, '%s', '%s', %d, '%s', %d,
+	    if obj.has_key("pageURL"):
+	    	mem_perc = stats[str(obj["pageURL"])]['mem']
+                cpu_perc = stats[str(obj["pageURL"])]['cpu']
+             	state = '''INSERT INTO %s VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', %d, '%s', '%s', '%s', '%s', %d, '%s', 
+            	'%s', %d, '%s', %d, '%s', %d, %d, %d, %d, %d, %d, '%s', %d, '%s', %d, '%s', %d, '%s', '%s', %d, '%s', %d,
                     %d, %d, %d, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', %d, '%s', %d, %d, '%s')
                     ''' % (self.dbconfig['rawtable'], str(obj["log"]), str(obj["ff_v"]), str(obj["method"]), str(obj["host"]),\
                      str(obj["uri"]), str(obj["ts"]), str(obj["type"]), int(obj["len"]), str(obj["C_Encode"]), str(obj["Encode"]), \
@@ -79,9 +80,8 @@ class DBClient:
                      int(obj["rcv"]), int(obj["onLoad"]), int(obj["onContent"]), int(obj["tabId"]), str(obj["wifi"]), str(obj["CPUidle"]), \
                      str(cpu_perc), str(obj["MEMfree"]), str(obj["MEMused"]), str(mem_perc), str(obj["pingGW"]), str(obj["pingDNS"]), \
                      str(obj["pingG"]), int(obj["AnnoyNr"]), str(obj["location"]), int(obj["IfAborted"]), int(obj["ID"]), str(obj["cmt"]))
-	    print state
-            cursor.execute(state)
-            self.conn.commit()
+	    	cursor.execute(state)
+            	self.conn.commit()
         sid_inserted = self._generate_sid_on_table()
         
 

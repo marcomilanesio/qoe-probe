@@ -14,7 +14,7 @@ Changelog v1.4 		1) Random value for Request_id in HTTP header
 Changelog v1.5		1) Har file formatted in one single raw 
 				"JSON.stringify(har, undefined)"	
 
-Changelog v1.6		1) Har file in  /tmp/harfile.har
+Changelog v1.6		1) Har file in  /tmp/phantomjs.har
 	   
 */
 if (!Date.prototype.toISOString) {
@@ -103,8 +103,7 @@ function createHAR(address, title, startTime, elaspedTime, resources)
                 connect: -1,
                 send: 0,
                 wait: startReply.time - request.time,
-		//receive: startReply.time.getTime(), 
-                receive: endReply.time - startReply.time,
+		receive: endReply.time - startReply.time,
                 ssl: -1
             },
             pageref: address
@@ -143,61 +142,24 @@ if (system.args.length === 1) {
 
     page.address = system.args[1];
     page.resources = [];
-    page.numobjects = 0;
-    
+        
     //page.settings.userAgent = "Firefox 12 on WandBoard - Eurecom";   
 
     page.onLoadStarted = function () {
         page.startTime = new Date();
     };
        
-    page.customHeaders = {"httpid" : "9999999"};
-    
-    /*
-    page.onInitialized = function() {
-        page.customHeaders = {};    	       
-    };
-    */
-    
+    page.customHeaders = {"httpid" : "1"};
+          
     page.onResourceRequested = function (req) {
         
-        
-        //Writing page load time
-        var fx = require('fs');
-        try {
-        	var hostdomain = page.address;
-                if (hostdomain.indexOf("http://") === 0) {hostdomain = hostdomain.substring(7);};
-
-                //write the host 
-		/*
-                nosubfolder = hostdomain.indexOf('/'); 
-		//console.log('Found caracter in position '+ nosubfolder);
-		if (nosubfolder !== -1) { 
-		    hostdomain = hostdomain.substring(0,nosubfolder);
-		}
-		filewrite = fx.open("host/" + hostdomain + ".host", "a+w");
-                //Select the host from req.url
-                a = req.url.indexOf(':')+3;
-               	url_short = req.url.substring(a);
-                //b = url_short.indexOf('/');
-                host = url_short.substring(0, url_short.indexOf('/'));
-                
-        	filewrite.writeLine(host);
-        	filewrite.close();
-		*/
-        } catch (e) { console.log(e); }  
-        
-        page.resources[req.id] = {
-            
+        page.resources[req.id] = {            
             request: req,
             startReply: null,
             endReply: null
         };
 	var random = Math.floor(Math.random()*2147483647);
-	//page.customHeaders = {"httpid" : random};
-        page.customHeaders = {"httpid" : req.id}; 
-        page.numobjects = req.id;
-              
+	page.customHeaders = {"httpid" : random};                              
     };
 
     page.onResourceReceived = function (res) {
@@ -236,28 +198,12 @@ if (system.args.length === 1) {
             var har = createHAR(page.address, page.title, page.startTime, t_end - t_start, page.resources);
             var fs = require('fs');
             
-	    try {
-		var hostdomain = page.address;
-                if (hostdomain.indexOf("http://") === 0) {hostdomain = hostdomain.substring(7);};
-                nosubfolder = hostdomain.indexOf('/'); 
-		//console.log('Found caracter in position '+ nosubfolder);
-		if (nosubfolder !== -1) { 
-		    hostdomain = hostdomain.substring(0,nosubfolder);
-		}
-		//timestamp = new Date().toNormalString();
-		//timestamp = new Date().toISOString();
-		timestamp = new Date().getTime();
+	    try {		
 		//Writing Har file		
-		f = fs.open("/tmp/session/session.har", "w");
+		f = fs.open("/tmp/phantomjs.har", "w");
                 f.writeLine(JSON.stringify(har, undefined, 4));
 		//f.writeLine(JSON.stringify(har, undefined));
-                f.close();
-		//Writing page load time
-		/*
-		fload = fs.open("loadtime/" + hostdomain + ".timelog", "a+w");
-                fload.writeLine((t_end - t_start) + "," + page.numobjects + "," + timestamp);
-                fload.close();
-		*/
+                f.close();		
 
             } catch (e) { console.log(e); }  
                        
@@ -265,7 +211,6 @@ if (system.args.length === 1) {
             phantom.exit();
         }
           
-    }); //end of page.open
-      
+    }); //end of page.open      
       
 }
