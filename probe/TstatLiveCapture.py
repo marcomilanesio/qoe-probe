@@ -59,14 +59,11 @@ def main(conf_file):
     tstat = TstatLiveCapture(config)
     
     if sys.argv[1] == "start":
-	tstat.start()
-    #elif sys.argv[1] == "stop":
-#	tstat.stop()
+	tstat.start()    
     else:
-	#logger.debug('Wrong command ! Only "start" or "stop" are accepted')
+	#logger.debug('Wrong command ! ')
 	tstat.stop(sys.argv[1])
-    #logger.info('Probing starting...')
-    
+        
     
 if __name__ == "__main__":
     if len(sys.argv) != 3:
