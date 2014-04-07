@@ -65,22 +65,71 @@ class DBClient:
         #insert a directory into the db
         cursor = self.conn.cursor()
         for obj in datalist:
-            mem_perc = stats[str(obj["pageURL"])]['mem']
-            cpu_perc = stats[str(obj["pageURL"])]['cpu']
-            state = '''INSERT INTO %s VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', %d, '%s', '%s', '%s', '%s', %d, '%s', 
-            '%s', %d, '%s', %d, '%s', %d, %d, %d, %d, %d, %d, '%s', %d, '%s', %d, '%s', %d, '%s', '%s', %d, '%s', %d,
-                    %d, %d, %d, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', %d, '%s', %d, %d, '%s')
-                    ''' % (self.dbconfig['rawtable'], str(obj["log"]), str(obj["ff_v"]), str(obj["method"]), str(obj["host"]),\
-                     str(obj["uri"]), str(obj["ts"]), str(obj["type"]), int(obj["len"]), str(obj["C_Encode"]), str(obj["Encode"]), \
-                     str(obj["s_cnxs"]), str(obj["s_http"]), int(obj["httpid"]), str(obj["pageStart"]), str(obj["pageURL"]), int(obj["cache"]), \
-                     str(obj["cIP"]), int(obj["cPort"]), str(obj["sIP"]), int(obj["sPort"]), int(obj["status"]), int(obj["GET_Byte"]), \
-                     int(obj["HeaderByte"]), int(obj["BodyByte"]), int(obj["CacheByte"]), str(obj["dns1"]), int(obj["dns"]), str(obj["tcp1"]), \
-                     int(obj["tcp"]), str(obj["sendTS"]), int(obj["send"]), str(obj["http1"]), str(obj["http2"]), int(obj["http"]), str(obj["EndTS"]), \
-                     int(obj["rcv"]), int(obj["onLoad"]), int(obj["onContent"]), int(obj["tabId"]), str(obj["wifi"]), str(obj["CPUidle"]), \
-                     str(cpu_perc), str(obj["MEMfree"]), str(obj["MEMused"]), str(mem_perc), str(obj["pingGW"]), str(obj["pingDNS"]), \
-                     str(obj["pingG"]), int(obj["AnnoyNr"]), str(obj["location"]), int(obj["IfAborted"]), int(obj["ID"]), str(obj["cmt"]))
-            cursor.execute(state)
-            self.conn.commit()
+			table_name = self.dbconfig['rawtable']
+			log_reason = str(obj["log"])
+			ff_version = str(obj["ff_v"])
+			method = str(obj["method"])
+			host = str(obj["host"])
+			uri = str(obj["uri"])
+			request_event_ts = str(obj["ts"])
+			content_type = str(obj["type"])
+			content_length = int(obj["len"])
+			accept_encoding = str(obj["C_Encode"])
+			content_encoding = str(obj["Encode"])
+			server_cnxs = str(obj["s_cnxs"])
+			server_http = str(obj["s_http"])
+			http_id = int(obj["httpid"])
+			session_start =  str(obj["pageStart"])
+			session_url = str(obj["pageURL"])
+			if_complete_cache =  int(obj["cache"])
+			localAddress = str(obj["cIP"])
+			localPort = int(obj["cPort"])
+			remoteAddress =  str(obj["sIP"])
+			remotePort = int(obj["sPort"])
+			response_code =  int(obj["status"])
+			http_request_bytes = int(obj["GET_Byte"])
+			http_header_bytes = int(obj["HeaderByte"])
+			http_body_bytes = int(obj["BodyByte"])
+			http_cache_bytes = int(obj["CacheByte"])
+			dns_start = str(obj["dns1"])
+			dns_time = int(obj["dns"])
+			syn_start = str(obj["tcp1"])
+			tcp_cnxting = int(obj["tcp"])
+			send_ts = str(obj["sendTS"])
+			send = int(obj["send"])
+			get_sent = str(obj["http1"])
+			first_bytes = str(obj["http2"])
+			app_rtt = int(obj["http"])
+			end_time =  str(obj["EndTS"])
+			data_trans = int(obj["rcv"])
+			full_load_time = int(obj["onLoad"])
+			content_load_time =  int(obj["onContent"])
+			tabId = int(obj["tabId"])
+			current_wifi_quality = str(obj["wifi"])
+			cpu_idle = str(obj["CPUidle"])
+			cpu_perc = str(stats[str(obj["pageURL"])]['cpu'])
+			mem_free = str(obj["MEMfree"])
+			mem_used = str(obj["MEMused"])
+			mem_perc = str(stats[str(obj["pageURL"])]['mem'])
+			ping_gw = str(obj["pingGW"])
+			ping_dns = str(obj["pingDNS"])
+			ping_google = str(obj["pingG"])
+			nr_annoying = int(obj["AnnoyNr"])
+			location = str(obj["location"])
+			obj_aborted = int(obj["IfAborted"])
+			clientID = int(obj["ID"])
+			cmt = str(obj["cmt"])
+			
+			state = '''INSERT INTO %s VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', %d, '%s', '%s', '%s', '%s', 
+			%d, '%s', '%s', %d, '%s', %d, '%s', %d, %d, %d, %d, %d, %d, '%s', %d, '%s', %d, '%s', %d, '%s', '%s', %d, 
+			'%s', %d, %d, %d, %d, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', %d, '%s', %d, %d, '%s') ''' % (table_name, log_reason, \
+			ff_version, method, host, uri, request_event_ts, content_type, content_length, accept_encoding, content_encoding, server_cnxs, server_http, \
+			http_id, session_start, session_url, if_complete_cache, localAddress, localPort, remoteAddress, remotePort, response_code, http_request_bytes, \
+			http_header_bytes, http_body_bytes, http_cache_bytes, dns_start, dns_time, syn_start, tcp_cnxting, send_ts, send, get_sent, first_bytes, app_rtt, \
+			end_time, data_trans, full_load_time, content_load_time, tabId, current_wifi_quality, cpu_idle, cpu_perc, mem_free, mem_used, mem_perc, ping_gw, \
+			ping_dns, ping_google, nr_annoying, location, obj_aborted, clientID, cmt)
+			cursor.execute(state)
+			self.conn.commit()
         sid_inserted = self._generate_sid_on_table()
         
 
@@ -154,3 +203,13 @@ class DBClient:
         self.execute_update( update )
         return forced_load_time
         
+    def check_for_zero_full_load_time(self):
+        res = []
+        q = '''select sid from %s where full_load_time = 0''' % self.dbconfig['rawtable']
+        res = self.execute_query(q)
+        sids = [int(x[0]) for x in res]
+        if len(sids) > 0:
+            for s in sids:
+                self.force_update_full_load_time(s)
+                res.append(s)
+        return res

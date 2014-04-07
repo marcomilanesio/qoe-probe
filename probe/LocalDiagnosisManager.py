@@ -65,6 +65,9 @@ class LocalDiagnosisManager():
         return res
     
     def _getClientIdleTime(self, sid):
+        found_zero = self.dbconn.check_for_zero_full_load_time()
+        if len(found_zero) > 0:
+            logger.warning('Found full_load_time = 0 in sessions %s. Updated.' % str(found_zero))
         res = self._execute_obj_start_end_query(sid)
         if len(res) == 0:
             logger.warning('sid %d, probe %d : full_load_time = -1' % (sid, self.clientid))
