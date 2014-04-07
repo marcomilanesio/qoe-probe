@@ -57,9 +57,12 @@ class TstatLiveCapture():
 def main(conf_file):
     config = Configuration(conf_file)
     tstat = TstatLiveCapture(config)
-    
+    browser = config.get_default_browser()['browser']
     if sys.argv[1] == "start":
-	tstat.start()    
+	if browser == 'phantomjs':
+	    tstat.start()    
+	else:
+	    logger.info("Tstat won't start - browser set as firefox")
     else:
 	#logger.debug('Wrong command ! ')
 	tstat.stop(sys.argv[1])

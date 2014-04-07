@@ -40,6 +40,9 @@ class Configuration():
     def get_tstat_configuration(self):
         return self.__extract_values_to_dictionary(self.config.items('tstat'))
 
+    def get_default_browser(self):
+	return self.__extract_values_to_dictionary(self.config.items('set_browser'))
+
     def get_firefox_configuration(self):
         return self.__extract_values_to_dictionary(self.config.items('firefox'))
     

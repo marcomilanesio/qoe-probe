@@ -18,26 +18,37 @@ if __name__ == '__main__':
     backupdir = sys.argv[3]
     logger = logging.getLogger('probe')
     config = Configuration(conf_file)
-    #plugin_out_file = config.get_database_configuration()['pluginoutfile']
-    plugin_out_file = config.get_database_configuration()['tstatfile']
-    harfile = config.get_database_configuration()['harfile']
+    browser = config.get_default_browser()['browser']
+    logger.debug('Browser set as: %s' % browser)
+    if browser == 'firefox':
+	plugin_out_file = config.get_database_configuration()['pluginoutfile']
+	ff_launcher = FFLauncher(config)
+    elif browser == 'phantomjs':
+	plugin_out_file = config.get_database_configuration()['tstatfile']
+	harfile = config.get_database_configuration()['harfile']
+	pjs_launcher = PJSLauncher(config)
+    else:
+	logger.debug('Browser set as: %s - WRONG BROWSER !!' % browser)
+	exit(0)
+    
     logger.debug('Backup dir set at: %s' % backupdir)
-    #ff_launcher = FFLauncher(config)
-    pjs_launcher = PJSLauncher(config)
     dbcli = DBClient(config)
     dbcli.create_tables()
     logger.debug('Starting nr_runs (%d)' % nun_runs)
     for i in range(nun_runs):
-        stats = pjs_launcher.browse_urls()
-        #stats = ff_launcher.browse_urls()
+	if browser == 'firefox':
+	    stats = ff_launcher.browse_urls()
+	else:
+            stats = pjs_launcher.browse_urls()        
 	if not os.path.exists(plugin_out_file):
             logger.error('Plugin outfile missing.')
             exit("Plugin outfile missing.")
-        dbcli.load_to_db(stats)
+        dbcli.load_to_db(stats, browser)
         logger.debug('Ended browsing run n.%d' % i)
-        new_fn = backupdir + '/' + plugin_out_file.split('/')[-1] + '.run%d' % i
-        new_har = backupdir + '/' + harfile.split('/')[-1] + '.run%d' % i
+	new_fn = backupdir + '/' + plugin_out_file.split('/')[-1] + '.run%d' % i        
 	os.rename(plugin_out_file, new_fn)
-	os.rename(harfile, new_har)
+	if browser == 'phantomjs':
+	    new_har = backupdir + '/' + harfile.split('/')[-1] + '.run%d' % i
+	    os.rename(harfile, new_har)
         logger.debug('Saved plugin file for run n.%d: %s' % (i,new_fn))
         
