@@ -32,6 +32,31 @@ if (!Date.prototype.toISOString) {
 }
 
 
+Date.prototype.toISOLocalDateTimeString = function() {
+    var padDigits = function padDigits(number, digits) {
+        return Array(Math.max(digits - String(number).length + 1, 0)).join(0) + number;
+    }
+    var offsetMinutes = this.getTimezoneOffset();
+    var offsetHours = offsetMinutes / 60;
+    var offset= "Z";    
+    if (offsetHours < 0)     
+      offset = "-" + padDigits(offsetHours.toString().replace("-","") + "00",4);
+    else if (offsetHours > 0) 
+      offset = "+" + padDigits(offsetHours  + "00", 4);
+
+    return this.getFullYear() 
+            + "-" + padDigits((this.getUTCMonth()+1),2) 
+            + "-" + padDigits(this.getUTCDate(),2) 
+            + "T" 
+            + padDigits(this.getUTCHours()-(offsetHours),2)
+            + ":" + padDigits(this.getUTCMinutes(),2)
+            + ":" + padDigits(this.getUTCSeconds(),2)
+            + "." + padDigits(this.getUTCMilliseconds(),2)
+            + offset;
+
+}
+
+
 if (!Date.prototype.toNormalString) {
         Date.prototype.toNormalString = function() {
         function pad(n) { return n < 10 ? '0' + n : n; }
@@ -67,9 +92,9 @@ function createHAR(address, title, startTime, elaspedTime, resources)
 	}
 
         entries.push({
-            startedDateTime: request.time.toISOString(),
-            TimeToFirstByte: startReply.time.toISOString(),
-            endtimeTS: endReply.time.toISOString(),
+            startedDateTime: request.time.toISOLocalDateTimeString(),
+            TimeToFirstByte: startReply.time.toISOLocalDateTimeString(),
+            endtimeTS: endReply.time.toISOLocalDateTimeString(),
 	    time: endReply.time - request.time,
             request: {
                 method: request.method,
@@ -119,7 +144,7 @@ function createHAR(address, title, startTime, elaspedTime, resources)
                     '.' + phantom.version.patch
             },
             pages: [{
-                startedDateTime: startTime.toISOString(),
+                startedDateTime: startTime.toISOLocalDateTimeString(),
                 id: address,
                 title: title,
                 pageTimings: {
