@@ -2,7 +2,7 @@
 re='^[0-9]+$'
 
 conf_file=$1
-nr_firefox_runs=$2
+nr_runs=$2
 
 if [ "$#" -ne 2 ]; then
     echo "Specify a configuration file and the number of runs";
@@ -42,7 +42,7 @@ fi
 
 ./probe/runTstatLiveCapture probe/TstatLiveCapture.py start $conf_file
 sleep 2
-/usr/bin/python probe.py $nr_firefox_runs $conf_file $BKP_FOLDER
+/usr/bin/python probe.py $nr_runs $conf_file $BKP_FOLDER
 tstatId=`pgrep tstat`
 if [[ $tstatId ]]
 then

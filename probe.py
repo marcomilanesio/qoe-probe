@@ -1,6 +1,7 @@
 #!/usr/bin/python
 import sys
 import os
+import shutil
 import logging
 import logging.config
 from probe.Configuration import Configuration
@@ -46,7 +47,8 @@ if __name__ == '__main__':
         dbcli.load_to_db(stats, browser)
         logger.debug('Ended browsing run n.%d' % i)
 	new_fn = backupdir + '/' + plugin_out_file.split('/')[-1] + '.run%d' % i        
-	os.rename(plugin_out_file, new_fn)
+	shutil.copyfile(plugin_out_file, new_fn)	# Quick and dirty not to delete Tstat log
+	open(plugin_out_file, 'w').close()	
 	if browser == 'phantomjs':
 	    new_har = backupdir + '/' + harfile.split('/')[-1] + '.run%d' % i
 	    os.rename(harfile, new_har)
