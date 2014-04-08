@@ -28,29 +28,29 @@ logger = logging.getLogger('FFLauncher')
 
 class FFLauncher():
     def __init__(self, config):
-        self.ffconfig = config.get_firefox_configuration()
+        self.browser_config = config.get_firefox_configuration()
         self.osstats = {}
         logger.debug('Loaded configuration')
 
-    def browse_urls(self):
-        out = open(self.ffconfig['logfile'], 'a')
-        for line in open(self.ffconfig['urlfile']):
-            logger.info('Browsing %s' % line.strip())
-            k = 'http://%s/' % line.strip()
-            self.osstats[k] = {'mem': 0.0, 'cpu': 0.0}
-            SLICE_IN_SECONDS = 1
-            cmdstr = "xvfb-run --wait=0 %s/firefox -P %s -url %s" % (self.ffconfig['dir'], self.ffconfig['profile'], line)
-            proc = subprocess.Popen(cmdstr.split(), stdout=out, stderr=subprocess.PIPE)
-            memtable = []
-            cputable = []
-            while proc.poll() == None:
-                arr = psutil.cpu_percent(interval=0.1,percpu=True)
-                cputable.append(sum(arr) / float(len(arr)))
-                memtable.append(psutil.virtual_memory().percent)
-                time.sleep(SLICE_IN_SECONDS)
-            self.osstats[k]['mem'] = float(sum(memtable) / len(memtable))
-            self.osstats[k]['cpu'] = float(sum(cputable) / len(cputable))
-            logger.info('mem = %.2f, cpu = %.2f' % (self.osstats[k]['mem'], self.osstats[k]['cpu'])) 
+    def browse_url(self, line):
+        out = open(self.browser_config['logfile'], 'a')
+        #for line in open(self.browser_config['urlfile']):
+        logger.info('Browsing %s' % line.strip())
+        k = 'http://%s/' % line.strip()
+        self.osstats[k] = {'mem': 0.0, 'cpu': 0.0}
+        SLICE_IN_SECONDS = 1
+        cmdstr = "xvfb-run --wait=0 %s/firefox -P %s -url %s" % (self.browser_config['dir'], self.browser_config['profile'], line)
+        proc = subprocess.Popen(cmdstr.split(), stdout=out, stderr=subprocess.PIPE)
+        memtable = []
+        cputable = []
+        while proc.poll() == None:
+            arr = psutil.cpu_percent(interval=0.1,percpu=True)
+            cputable.append(sum(arr) / float(len(arr)))
+            memtable.append(psutil.virtual_memory().percent)
+            time.sleep(SLICE_IN_SECONDS)
+        self.osstats[k]['mem'] = float(sum(memtable) / len(memtable))
+        self.osstats[k]['cpu'] = float(sum(cputable) / len(cputable))
+        logger.info('mem = %.2f, cpu = %.2f' % (self.osstats[k]['mem'], self.osstats[k]['cpu'])) 
         out.close()
         return self.osstats
 

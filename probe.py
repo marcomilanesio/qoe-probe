@@ -23,11 +23,11 @@ if __name__ == '__main__':
     logger.debug('Browser set as: %s' % browser)
     if browser == 'firefox':
 	plugin_out_file = config.get_database_configuration()['pluginoutfile']
-	ff_launcher = FFLauncher(config)
+	launcher = FFLauncher(config)
     elif browser == 'phantomjs':
 	plugin_out_file = config.get_database_configuration()['tstatfile']
 	harfile = config.get_database_configuration()['harfile']
-	pjs_launcher = PJSLauncher(config)
+	launcher = PJSLauncher(config)
     else:
 	logger.debug('Browser set as: %s - WRONG BROWSER !!' % browser)
 	exit(0)
@@ -36,21 +36,19 @@ if __name__ == '__main__':
     dbcli = DBClient(config)
     dbcli.create_tables()
     logger.debug('Starting nr_runs (%d)' % nun_runs)
-    for i in range(nun_runs):
-	if browser == 'firefox':
-	    stats = ff_launcher.browse_urls()
-	else:
-            stats = pjs_launcher.browse_urls()        
-	if not os.path.exists(plugin_out_file):
-            logger.error('Plugin outfile missing.')
-            exit("Plugin outfile missing.")
-        dbcli.load_to_db(stats, browser)
-        logger.debug('Ended browsing run n.%d' % i)
-	new_fn = backupdir + '/' + plugin_out_file.split('/')[-1] + '.run%d' % i        
-	shutil.copyfile(plugin_out_file, new_fn)	# Quick and dirty not to delete Tstat log
-	open(plugin_out_file, 'w').close()	
-	if browser == 'phantomjs':
-	    new_har = backupdir + '/' + harfile.split('/')[-1] + '.run%d' % i
-	    os.rename(harfile, new_har)
-        logger.debug('Saved plugin file for run n.%d: %s' % (i,new_fn))
+    for i in range(nun_runs):       
+	for line in open(launcher.browser_config['urlfile']):
+	    stats = launcher.browse_url(line) 
+	    if not os.path.exists(plugin_out_file):
+                logger.error('Plugin outfile missing.')
+                exit("Plugin outfile missing.")
+            dbcli.load_to_db(stats, browser)
+            logger.debug('Ended browsing run n.%d' % i)
+	    new_fn = backupdir + '/' + plugin_out_file.split('/')[-1] + '.' + line.strip() +'_run%d' % i        
+	    shutil.copyfile(plugin_out_file, new_fn)	# Quick and dirty not to delete Tstat log
+	    open(plugin_out_file, 'w').close()	
+	    if browser == 'phantomjs':
+	        new_har = backupdir + '/' + harfile.split('/')[-1] + '.' + line.strip() +'_run%d' % i
+	        os.rename(harfile, new_har)
+            logger.debug('Saved plugin file for run n.%d: %s' % (i,new_fn))
         
