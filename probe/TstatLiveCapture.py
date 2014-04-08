@@ -62,7 +62,7 @@ def main(conf_file):
 	if browser == 'phantomjs':
 	    tstat.start()    
 	else:
-	    logger.info("Tstat won't start - browser set as firefox")
+	    logger.debug("Tstat won't start - browser set as firefox")
     else:
 	#logger.debug('Wrong command ! ')
 	tstat.stop(sys.argv[1])
