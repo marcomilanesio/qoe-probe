@@ -23,12 +23,63 @@ import psutil
 import time
 from probe.Configuration import Configuration
 import logging
+import threading
+import os
 
 logger = logging.getLogger('FFLauncher')
 
+class BrowserThread(threading.Thread):
+    def __init__(self, cmd, outf, errf):
+        self.cmd = cmd
+        self.process = 0
+        self.outfile = outf
+        self.errfile = errf
+        self.mem = -1
+        self.cpu = -1
+        self.flag = False
+
+    def run(self, timeout):
+        def target():
+            o = open(self.outfile, 'a')
+            e = open(self.errfile, 'a')
+            logger.debug('Browsing Thread started')
+            FNULL = open(os.devnull, 'w')
+            self.process = subprocess.Popen(self.cmd, stdout=FNULL, stderr=FNULL, shell=True)
+            memtable = []
+            cputable = []
+            while self.process.poll() == None:
+                arr = psutil.cpu_percent(interval=0.1,percpu=True)
+                cputable.append(sum(arr) / float(len(arr)))
+                memtable.append(psutil.virtual_memory().percent)
+                time.sleep(1)
+            if self.process.poll() == 0:
+                self.mem = float(sum(memtable) / len(memtable))
+                self.cpu = float(sum(cputable) / len(cputable))
+                #print 'mem = %.2f, cpu = %.2f' % (mem, cpu)
+            else:
+                logger.error('Browsing thread mem and cpu not set')
+            
+            logger.debug('Browsing Thread finished')
+            o.close()
+            e.close()
+
+        thread = threading.Thread(target=target)
+        thread.start()
+
+        thread.join(timeout)
+        if thread.is_alive():
+            logger.debug('Timeout expired: terminating process')
+            self.process.terminate()
+            self.flag = True
+            thread.join()
+        
+        return self.flag, self.mem, self.cpu
+                
+
 class FFLauncher():
     def __init__(self, config):
-        self.ffconfig = config.get_firefox_configuration()
+        self.config = config
+        self.ffconfig = self.config.get_firefox_configuration()
         self.osstats = {}
         logger.debug('Loaded configuration')
 
@@ -38,22 +89,37 @@ class FFLauncher():
             logger.info('Browsing %s' % line.strip())
             k = 'http://%s/' % line.strip()
             self.osstats[k] = {'mem': 0.0, 'cpu': 0.0}
-            SLICE_IN_SECONDS = 1
             cmdstr = "xvfb-run --wait=0 %s/firefox -P %s -url %s" % (self.ffconfig['dir'], self.ffconfig['profile'], line)
-            proc = subprocess.Popen(cmdstr.split(), stdout=out, stderr=subprocess.PIPE)
-            memtable = []
-            cputable = []
-            while proc.poll() == None:
-                arr = psutil.cpu_percent(interval=0.1,percpu=True)
-                cputable.append(sum(arr) / float(len(arr)))
-                memtable.append(psutil.virtual_memory().percent)
-                time.sleep(SLICE_IN_SECONDS)
-            self.osstats[k]['mem'] = float(sum(memtable) / len(memtable))
-            self.osstats[k]['cpu'] = float(sum(cputable) / len(cputable))
-            logger.info('mem = %.2f, cpu = %.2f' % (self.osstats[k]['mem'], self.osstats[k]['cpu'])) 
+            cmd = BrowserThread(cmdstr, self.ffconfig['thread_outfile'], self.ffconfig['thread_errfile'])
+            t = int(self.ffconfig['thread_timeout'])
+            flag, mem, cpu = cmd.run(timeout=t)
+
+            if not flag:
+                self.osstats[k]['mem'] = mem
+                self.osstats[k]['cpu'] = cpu
+                logger.info('mem = %.2f, cpu = %.2f' % (self.osstats[k]['mem'], self.osstats[k]['cpu']))
+            else:
+                logger.warning('Problems in browsing thread. Waiting for xvfb to restart...')
+                time.sleep(5)
+                return None
         out.close()
         return self.osstats
 
+    '''
+    def dump_data_on_error(self):
+        import datetime
+        import time
+        now = datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
+        dumpfile = './dumped.plugin.file.%s' % now
+        plugin_file = self.config.get_database_configuration()['pluginoutfile']
+        #os.rename(plugin_file, dumpfile)
+        logger.info('Dumped plugin out file to: %s' % dumpfile)
+        logger.info('Sleeping 5 seconds...')
+        time.sleep(5)
+        
+        return None
+    '''
+        
 if __name__ == '__main__':
     f = FFLauncher()
     print f.browse_urls()
