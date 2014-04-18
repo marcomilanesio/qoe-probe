@@ -139,22 +139,42 @@ class ActiveMonitor():
         logger.info('Traceroute to %s terminated' % target)
         tracefilename = Utils.pack_files( traceroute_fnames, target + '.trace')
         return self.build_trace(target, tracefilename, mtrfilename)
-        
+
     def do_probe(self):
         tot_active_measurement = {}
+        probed_ip = {}
         for sid, url_addr in self.session_dic.iteritems():
             if sid not in tot_active_measurement.keys():
                 tot_active_measurement[sid] = []
             url = url_addr['url']
             ip_addrs = url_addr['address']
             for ip in ip_addrs:
-                ping = self.do_ping(ip)
-                trace = self.do_traceroute(ip)
+                if ip not in probed_ip.keys():
+                    probed_ip[ip] = []
+                probed_ip[ip].append(sid)
+
+                if len(probed_ip[ip]) > 1:
+                    logger.debug('IP address [%s] already computed, skipping new ping/trace' % ip)
+                    c_sid = probed_ip[ip][0]
+                    logger.debug('First sid found for IP [%s] : %d' % (ip, c_sid))
+                    logger.debug('Found %d measurements. ' % len(tot_active_measurement[c_sid]))
+                    ping = tot_active_measurement[c_sid][0]['ping']
+                    logger.debug('Ping for IP [%s] : %s' % (ip, str(ping)))
+                    trace = tot_active_measurement[c_sid][0]['trace']
+                    logger.debug('Trace for IP [%s] : %s' % (ip, str(ping)))
+                else:
+                    c_sid = sid
+                    ping = self.do_ping(ip)
+                    trace = self.do_traceroute(ip)
+                    
+                logger.debug('current %d, inserted from %d' % (sid, c_sid))
                 tot_active_measurement[sid].append({'url' : url, 'ip': ip, 'ping' : ping, 'trace' : trace})
+                probed_ip[ip].append(sid)
                 logger.info('Computed Active Measurement for %s in session %d' % (ip, sid))
+
         self.db.insert_active_measurement(tot_active_measurement)
-        logger.info('ping and traceroute saved into db.') 
-            
+        logger.info('ping and traceroute saved into db.')
+        
         
 def main(conf_file):
     config = Configuration(conf_file)
