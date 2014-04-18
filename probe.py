@@ -7,7 +7,7 @@ from probe.Configuration import Configuration
 from probe.FFLauncher import FFLauncher
 from probe.DBClient import DBClient
 
-logging.config.fileConfig('probe/logging.conf')
+logging.config.fileConfig('logging.conf')
 
 if __name__ == '__main__':
     if len(sys.argv) < 4:
@@ -25,6 +25,9 @@ if __name__ == '__main__':
     logger.debug('Starting nr_runs (%d)' % nun_runs)
     for i in range(nun_runs):
         stats = ff_launcher.browse_urls()
+        if stats is None:
+            logger.warning('Problem in session %d.. skipping' % i)
+            continue
         if not os.path.exists(plugin_out_file):
             logger.error('Plugin outfile missing.')
             exit("Plugin outfile missing.")
