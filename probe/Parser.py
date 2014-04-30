@@ -32,7 +32,7 @@ import fpformat
 
 
 
-def parseTstat(filename,separator):
+def parseTstat(filename,separator, client_id):
     # Read tstat log
     log = open(filename, "r")
     lines = log.readlines()
@@ -49,7 +49,7 @@ def parseTstat(filename,separator):
 	    httpids = line[59].split(",")
 	    #print httpids
 	    for elem in httpids:
-            	metrics = {'cIP': line[0], 'cPort': line[1], 'tcp': fpformat.fix(line[13],0), 
+            	metrics = {'cIP': line[0], 'cPort': line[1], 'ID': client_id, 'tcp': fpformat.fix(line[13],0), 
 				'sIP': line[30], 'sPort': line [31],'httpid': elem}
 	    	jsonmetrics = jsonmetrics + json.dumps(metrics) + "\n"
     return jsonmetrics.split(separator)
@@ -135,7 +135,7 @@ def updatebyHar(tstatdata,filename):
 					'send': str(send), 'http1': str(request_ts), 'http2': str(firstByte), 'http': str(wait), 
 					'EndTS': str(endTS),'rcv': str(receive), 'tabId': "0", 'wifi': "0;0", 'CPUidle': "-1;-1", 
 					'MEMfree': "-1;-1", 'MEMused': "-1;-1", 'pingGW': "null", 'pingDNS': "null", 
-					'pingG': "null", 'AnnoyNr': "0", 'location': "null", 'IfAborted': "0", 'ID': "100", 'cmt': "null"}
+					'pingG': "null", 'AnnoyNr': "0", 'location': "null", 'IfAborted': "0", 'cmt': "null"}
 						
 			line.update(fields_to_add)
 			#print line

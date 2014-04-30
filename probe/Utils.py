@@ -42,8 +42,8 @@ def __file_to_array(filename, separator):
 
 
 #Read tstat logfile and match it by HAR file
-def read_tstatlog(tstalogfile, harfile, separator):
-    strarray = Parser.parseTstat(tstalogfile, separator)
+def read_tstatlog(tstalogfile, harfile, separator, client_id):
+    strarray = Parser.parseTstat(tstalogfile, separator, client_id)
     rows = []
     for line in strarray:
         try:
@@ -53,8 +53,8 @@ def read_tstatlog(tstalogfile, harfile, separator):
             print line
 	    continue
     full_rows = Parser.updatebyHar(rows, harfile)
-    return full_rows
-        
+    return full_rows        
+
 
 #Read json formatted file.
 def read_file(filename, separator):
@@ -67,7 +67,6 @@ def read_file(filename, separator):
         except ValueError:
             print line
 	    continue
-    #rows = Parser.updatebyHar(rows)
     return rows
 
 
