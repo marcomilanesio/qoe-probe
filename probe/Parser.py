@@ -49,8 +49,9 @@ def parseTstat(filename,separator, client_id):
 	    httpids = line[59].split(",")
 	    #print httpids
 	    for elem in httpids:
-            	metrics = {'cIP': line[0], 'cPort': line[1], 'ID': client_id, 'tcp': fpformat.fix(line[13],0), 
-				'sIP': line[30], 'sPort': line [31],'httpid': elem}
+		app_rtt = float(line[15])+float(line[26])
+            	metrics = {'local_ip': line[0], 'local_port': line[1], 'probe_id': client_id, 'syn_time': fpformat.fix(line[13],0), 
+				'app_rtt': fpformat.fix(app_rtt,0), 'remote_ip': line[30], 'remote_port': line [31],'httpid': elem}
 	    	jsonmetrics = jsonmetrics + json.dumps(metrics) + "\n"
     return jsonmetrics.split(separator)
 
@@ -88,7 +89,7 @@ def updatebyHar(tstatdata,filename):
 	
 	# Global metrics of the session
 	version = data["log"]["creator"]["version"]
-	page_url = data["log"]["entries"][0]["request"]["url"]	# pageURL is the url of the first request
+	session_url = data["log"]["entries"][0]["request"]["url"]	# session_url is the url of the first request
 	session_start = data["log"]["pages"][0]["startedDateTime"].replace('T', ' ')[0:-1]
 	onContentLoad = data["log"]["pages"][0]["pageTimings"]["onContentLoad"]
 	onLoad = data["log"]["pages"][0]["pageTimings"]["onLoad"]
@@ -118,24 +119,23 @@ def updatebyHar(tstatdata,filename):
             dns = entry["timings"]["dns"]
             connect = entry["timings"]["connect"]
             send = entry["timings"]["send"]
-            wait = entry["timings"]["wait"]
+            wait = entry["timings"]["wait"]	#Not used
             receive = entry["timings"]["receive"]
 
             # Matching tstatdata
 	    for line in tstatdata:			
 		if line["httpid"] == http_id:
 			#fields_to_add = {'log'.decode('utf-8'): "null".decode('utf-8')}
-			fields_to_add = {'log': "null", 'pageURL': page_url,'onLoad': str(onLoad), 'onContent': str(onContentLoad), 
-					'ff_v': str(version), 'method': str(method), 'host': str(request_host), 'uri': str(request_url),
-					'ts': "1970-01-01 12:00:00", 'type': str(cnt_type), 'len': "0", 'C_Encode': "null", 
-					'Encode': "null", 's_cnxs': "null", 's_http': str(httpVersion), 'pageStart': str(session_start),
-					'cache': "0", 'status': str(status), 'GET_Byte': "-1", 'HeaderByte': "-1", 
-					'BodyByte': str(responde_body_size), 'CacheByte': "0", 'dns1': "1970-01-01 12:00:00", 
-					'dns': str(dns), 'tcp1': "1970-01-01 12:00:00", 'sendTS': "1970-01-01 12:00:00", 
-					'send': str(send), 'http1': str(request_ts), 'http2': str(firstByte), 'http': str(wait), 
-					'EndTS': str(endTS),'rcv': str(receive), 'tabId': "0", 'wifi': "0;0", 'CPUidle': "-1;-1", 
-					'MEMfree': "-1;-1", 'MEMused': "-1;-1", 'pingGW': "null", 'pingDNS': "null", 
-					'pingG': "null", 'AnnoyNr': "0", 'location': "null", 'IfAborted': "0", 'cmt': "null"}
+			fields_to_add = {'session_url': session_url,'full_load_time': str(onLoad),
+					'host': str(request_host), 'uri': str(request_url),
+					'request_ts': str(request_ts), 'content_type': str(cnt_type), 'content_len': "0", 
+					'keep_alive': "null", 'session_start': str(session_start),
+					'cache': "0", 'response_code': str(status), 'get_bytes': "-1", 'header_bytes': "-1", 
+					'body_bytes': str(responde_body_size), 'cache_bytes': "0", 'dns_start': "1970-01-01 01:00:00", 
+					'dns_time': str(dns), 'syn_start': "1970-01-01 01:00:00", 
+					'is_sent': "0", 'get_sent_ts': "1970-01-01 01:00:00", 'first_bytes_rcv': str(firstByte), 
+					'end_time': str(endTS),'rcv_time': str(receive), 'tab_id': "0", 
+					'ping_gateway': "null", 'ping_google': "null", 'annoy': "0"}
 						
 			line.update(fields_to_add)
 			#print line
