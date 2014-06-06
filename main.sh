@@ -48,7 +48,7 @@ if [[ $tstatId ]]
 then
         ./probe/runTstatLiveCapture probe/TstatLiveCapture.py $(printf $tstatId) $conf_file
 fi
-#./probe/runActiveMonitor probe/ActiveMonitor.py $conf_file
+./probe/runActiveMonitor probe/ActiveMonitor.py $conf_file
 #mv *.mtr $BKP_FOLDER/
-#mv *.trace_* $BKP_FOLDER/
+mv *.trace_* $BKP_FOLDER/
 echo "Done."

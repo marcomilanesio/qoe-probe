@@ -38,7 +38,7 @@ class JSONClient():
         self.clientid = self._get_client_id_from_db()
     
     def _get_client_id_from_db(self):
-        q = 'select distinct on (clientID) clientID from %s ' % self.rawtable
+        q = 'select distinct on (probe_id) probe_id from %s ' % self.rawtable
         r = self.db.execute_query(q)
         assert len(r) == 1
         return int(r[0][0])
@@ -49,7 +49,7 @@ class JSONClient():
         sids = list(set([r[0] for r in res]))
         local_data = {'clientid': self.clientid, 'local': self._prepare_local_data(sids)}
         str_to_send = "local: " + json.dumps(local_data)
-        logger.info('sending local data... %s' % self.send_to_srv(str_to_send, is_json=True))
+	logger.info('sending local data... %s' % self.send_to_srv(str_to_send, is_json=True))
         for row in res:
             active_data = {'clientid': self.clientid, 'ping': None, 'trace': []}
             count = 0
@@ -76,7 +76,7 @@ class JSONClient():
                 else:
                     active_data['trace'].append({ 'sid': sid, 'remoteaddress': remoteaddress, 'step': step_nr, 'step_address': target, 'min': -1, 'max' : -1, 'avg': -1, 'std': -1 })
             #logger.debug('Removed %d empty step(s) from secondary path to %s.' % (count, remoteaddress))
-            logger.info('sending ping/trace data about [%s]: %s ' % (remoteaddress,  self.send_to_srv(active_data)))
+	    logger.info('sending ping/trace data about [%s]: %s ' % (remoteaddress,  self.send_to_srv(active_data)))
         
         for sent_sid in sids:
             update_query = '''update %s set sent = 't' where sid = %d''' % ( self.activetable, int(sent_sid) )
@@ -102,7 +102,7 @@ class JSONClient():
     def send_request_for_diagnosis(self, url, time_range=6):
         data = {'clientid': self.clientid, 'url': url, 'time_range': time_range}
         str_to_send = 'check: ' + json.dumps(data)
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.connect((self.srv_ip, self.srv_port))
         s.send(str_to_send + "\n")
         result = json.loads(s.recv(1024))

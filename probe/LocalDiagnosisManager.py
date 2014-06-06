@@ -43,17 +43,17 @@ class LocalDiagnosisManager():
         return res
          
     def _execute_obj_start_end_query(self, sid, full_load_time = True):
-        q = '''select session_start, obj_start, obj_end, http_id, host,
+        q = '''select session_start, obj_start, obj_end, httpid, host,
             extract(minute from obj_start-session_start)*60*1000+extract(millisecond from obj_start-session_start) as relative_start, 
             extract(minute from obj_end-session_start)*60*1000+extract(millisecond from obj_end-session_start) as relative_end 
             from 
             (SELECT session_start, 
-            case when dns_start>'1970-01-01 12:00:00' and dns_start<syn_start and dns_start<get_sent then dns_start 
-            when syn_start>'1970-01-01 12:00:00' and syn_start<get_sent then syn_start 
-            when get_sent>'1970-01-01 12:00:00' then get_sent else request_event_ts end as obj_start, 
-            case when endtime>'1970-01-01 12:00:00' then endtime 
-            when first_bytes>'1970-01-01 12:00:00' then first_bytes else request_event_ts end as obj_end, 
-            http_id, host from %s where sid=%d and if_complete_cache>-1
+            case when dns_start>'1970-01-01 12:00:00' and dns_start<syn_start and dns_start<get_sent_ts then dns_start 
+            when syn_start>'1970-01-01 12:00:00' and syn_start<get_sent_ts then syn_start 
+            when get_sent_ts>'1970-01-01 12:00:00' then get_sent_ts else request_ts end as obj_start, 
+            case when end_time>'1970-01-01 12:00:00' then end_time 
+            when first_bytes_rcv>'1970-01-01 12:00:00' then first_bytes_rcv else request_ts end as obj_end, 
+            httpid, host from %s where sid=%d and cache>-1
             ''' % (self.dbconn.get_table_names()['raw'], sid)
         
         if full_load_time:
@@ -104,14 +104,14 @@ class LocalDiagnosisManager():
             return float(res[0][0]) #msec
 
     def _getDNSResponseTime(self, sid):
-        q = 'select remoteaddress, dns_time from %s where sid = %d and dns_time > 0 and full_load_time > -1' % (self.dbconn.get_table_names()['raw'], sid)
+        q = 'select remote_ip, dns_time from %s where sid = %d and dns_time > 0 and full_load_time > -1' % (self.dbconn.get_table_names()['raw'], sid)
         res = self.dbconn.execute_query(q)
         #resolved_ips = [r[0] for r in res]
         dns_times = [float(r[1]) for r in sorted(res, key=lambda time: time[1])]
         return sum(dns_times) #msec
 
     def _getTCPResponseTime(self, sid):
-        q = 'select tcp_cnxting from %s where sid = %d and full_load_time > -1' % (self.dbconn.get_table_names()['raw'], sid)
+        q = 'select syn_time from %s where sid = %d and full_load_time > -1' % (self.dbconn.get_table_names()['raw'], sid)
         res = self.dbconn.execute_query(q)
         tcp_times = [r[0] for r in res]
         if len(tcp_times) == 0:
@@ -121,7 +121,7 @@ class LocalDiagnosisManager():
 
 
     def _getPageDimension(self, sid):
-        q =  'SELECT sum(http_header_bytes+http_body_bytes) as netw_bytes, count(*) as nr_netw_obj from %s where sid = %d and full_load_time > -1' % (self.dbconn.get_table_names()['raw'], sid)
+        q =  'SELECT sum(header_bytes+body_bytes) as netw_bytes, count(*) as nr_netw_obj from %s where sid = %d and full_load_time > -1' % (self.dbconn.get_table_names()['raw'], sid)
         res = self.dbconn.execute_query(q)
         assert len(res) == 1
         if res[0][0] != None:
@@ -132,7 +132,7 @@ class LocalDiagnosisManager():
         return tot_bytes
 
     def _getOSStats(self,sid):
-        q = "select distinct on(cpu_percent_ffx, mem_percent_ffx) cpu_percent_ffx, mem_percent_ffx from %s where sid = %d" % (self.dbconn.get_table_names()['raw'], sid)
+        q = "select distinct on(cpu_percent, mem_percent) cpu_percent, mem_percent from %s where sid = %d" % (self.dbconn.get_table_names()['raw'], sid)
         res = self.dbconn.execute_query(q)
         if len(res) != 1:
             logger.error('multiple sessions with sid = %d' % sid)

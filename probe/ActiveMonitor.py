@@ -43,7 +43,7 @@ class ActiveMonitor():
         
     def _get_inserted_sid_addresses(self):
         result = {}
-        q = "select distinct on (sid, session_url, remoteaddress) sid, session_url, remoteaddress FROM %s where sid not in (select distinct sid from active)" % (self.raw_table_name)
+        q = "select distinct on (sid, session_url, remote_ip) sid, session_url, remote_ip FROM %s where sid not in (select distinct sid from active)" % (self.raw_table_name)
         res = self.db.execute_query(q)
         for tup in res:
             cur_sid = tup[0]
@@ -74,7 +74,7 @@ class ActiveMonitor():
             os.remove(tracefile) # remove packed trace file as root
         except OSError, e:
             logger.error('Error in removing packed tracefile %s' % tracefile)
-        t.parse_mtrfile(mtrfile)
+        #t.parse_mtrfile(mtrfile)
         return json.dumps(t.get_results())
 
     def do_ping(self, host):
@@ -95,7 +95,7 @@ class ActiveMonitor():
     
     def _execute(self, c, outfilename):
         outfile = open(outfilename, 'w')
-        traceroute = subprocess.Popen(c, stdout=outfile, stderr=subprocess.PIPE)
+	traceroute = subprocess.Popen(c, stdout=outfile, stderr=subprocess.PIPE)
         _, err = traceroute.communicate()
         if err:
             logger.error( "Error in: %s" % c )
@@ -107,8 +107,9 @@ class ActiveMonitor():
         trace_tcpsyn = "traceroute -n -T -m %d %s" % (maxttl, target)
         trace_icmp = "traceroute -n -I -m %d %s" % (maxttl, target)
         trace_mtr = "mtr -n --report --report-cycles 20 %s" % target
-        cmds = [trace_udp,trace_tcpsyn,trace_icmp,trace_mtr]
-        traceroute_fnames = []
+        #cmds = [trace_udp,trace_tcpsyn,trace_icmp,trace_mtr]
+	cmds = [trace_udp,trace_tcpsyn,trace_icmp]        
+	traceroute_fnames = []
         mtrfilename = '%s.mtr' % target
         thread_list = []
         i = 0

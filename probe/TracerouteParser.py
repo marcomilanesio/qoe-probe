@@ -63,6 +63,7 @@ class TracerouteParser():
         arr = f.readlines()
         f.close()
         rows = arr[1:]
+	#print rows
         if re.match('HOST',rows[0]): #quick & dirty for mtr 0.85 vs 0.84
             rows = rows[1:]
         last_inserted = 0
