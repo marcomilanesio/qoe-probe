@@ -9,3 +9,5 @@ mplane.conf
 url.list
 probe/thread_err.file 
 probe/thread_out.file
+.idea
+.idea/*
