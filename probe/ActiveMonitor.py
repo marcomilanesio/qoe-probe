@@ -20,8 +20,6 @@
 import subprocess
 import threading
 import sys
-import socket
-import struct
 import re
 import os
 from TracerouteParser import TracerouteParser
@@ -43,7 +41,8 @@ class ActiveMonitor():
         
     def _get_inserted_sid_addresses(self):
         result = {}
-        q = "select distinct on (sid, session_url, remoteaddress) sid, session_url, remoteaddress FROM %s where sid not in (select distinct sid from active)" % (self.raw_table_name)
+        q = '''select distinct on (sid, session_url, remoteaddress) sid, session_url, remoteaddress
+        FROM %s where sid not in (select distinct sid from active)''' % self.raw_table_name
         res = self.db.execute_query(q)
         for tup in res:
             cur_sid = tup[0]
@@ -78,7 +77,6 @@ class ActiveMonitor():
         return json.dumps(t.get_results())
 
     def do_ping(self, host):
-        result = {}
         cmdline = ["./probe/ping_activeprobe.sh", host]
         logger.info('pinging %s' % host )
         ping = subprocess.Popen(cmdline, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
