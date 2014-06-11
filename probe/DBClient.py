@@ -44,21 +44,24 @@ class DBClient:
     def create_plugin_table(self):
         #create a Table for the Firefox plugin
         cursor = self.conn.cursor()
-        cursor.execute('''CREATE TABLE IF NOT EXISTS %s (log_reason TEXT, ff_version TEXT, method TEXT, host TEXT, uri TEXT, 
-        request_event_ts TIMESTAMP, content_type TEXT, content_length INT4, AcceptEncoding TEXT, ContentEncoding TEXT, 
-        server_cnxs TEXT, server_http TEXT, http_id INT8, session_start TIMESTAMP, session_url TEXT, if_complete_cache INT4, 
-        localAddress INET, localPort INT4, remoteAddress INET, remotePort INT4, response_code INT4, http_request_bytes INT4, 
-        http_header_bytes INT4, http_body_bytes INT4, http_cache_bytes INT4, dns_start TIMESTAMP, dns_time INT4, syn_start TIMESTAMP, 
-        tcp_cnxting INT4, send_ts TIMESTAMP, send INT4, GET_sent TIMESTAMP, First_Bytes TIMESTAMP, app_rtt INT4, EndTime TIMESTAMP, 
-        data_trans INT4, full_load_time INT4, content_load_time INT4, tabId INT8, current_wifi_quality TEXT, cpu_idle TEXT, 
-        cpu_percent_ffx TEXT, mem_free TEXT, mem_used TEXT, mem_percent_ffx TEXT, ping_gw TEXT, ping_dns TEXT, ping_google TEXT, 
-        nr_annoying INT4, location TEXT, obj_aborted INT4, clientID INT8, cmt TEXT, sid INT8)''' % self.dbconfig['rawtable']) 
+        cursor.execute('''CREATE TABLE IF NOT EXISTS %s (log_reason TEXT, ff_version TEXT, method TEXT, host TEXT,
+        uri TEXT, request_event_ts TIMESTAMP, content_type TEXT, content_length INT4, AcceptEncoding TEXT,
+        ContentEncoding TEXT, server_cnxs TEXT, server_http TEXT, http_id INT8, session_start TIMESTAMP,
+        session_url TEXT, if_complete_cache INT4, localAddress INET, localPort INT4, remoteAddress INET,
+        remotePort INT4, response_code INT4, http_request_bytes INT4, http_header_bytes INT4, http_body_bytes INT4,
+        http_cache_bytes INT4, dns_start TIMESTAMP, dns_time INT4, syn_start TIMESTAMP, tcp_cnxting INT4,
+        send_ts TIMESTAMP, send INT4, GET_sent TIMESTAMP, First_Bytes TIMESTAMP, app_rtt INT4, EndTime TIMESTAMP,
+        data_trans INT4, full_load_time INT4, content_load_time INT4, tabId INT8, current_wifi_quality TEXT,
+        cpu_idle TEXT, cpu_percent_ffx TEXT, mem_free TEXT, mem_used TEXT, mem_percent_ffx TEXT, ping_gw TEXT,
+        ping_dns TEXT, ping_google TEXT, nr_annoying INT4, location TEXT, obj_aborted INT4, clientID INT8,
+        cmt TEXT, sid INT8)''' % self.dbconfig['rawtable'])
         self.conn.commit()
 
     def create_activemeasurement_table(self):
         cursor = self.conn.cursor()
         # PSQL > 9.2 change TEXT to JSON
-        cursor.execute('''CREATE TABLE IF NOT EXISTS %s (sid INT8, session_url TEXT, remoteAddress INET, ping TEXT, trace TEXT, sent BOOLEAN)''' % self.dbconfig['activetable'])
+        cursor.execute('''CREATE TABLE IF NOT EXISTS %s (sid INT8, session_url TEXT,
+        remoteAddress INET, ping TEXT, trace TEXT, sent BOOLEAN)''' % self.dbconfig['activetable'])
         self.conn.commit()
         
     def write_plugin_into_db(self, datalist, stats):
@@ -122,12 +125,14 @@ class DBClient:
 
             state = '''INSERT INTO %s VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', %d, '%s', '%s', '%s', '%s',
             %d, '%s', '%s', %d, '%s', %d, '%s', %d, %d, %d, %d, %d, %d, '%s', %d, '%s', %d, '%s', %d, '%s', '%s', %d,
-            '%s', %d, %d, %d, %d, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', %d, '%s', %d, %d, '%s') ''' % (table_name, log_reason, \
-            ff_version, method, host, uri, request_event_ts, content_type, content_length, accept_encoding, content_encoding, server_cnxs, server_http, \
-            http_id, session_start, session_url, if_complete_cache, localAddress, localPort, remoteAddress, remotePort, response_code, http_request_bytes, \
-            http_header_bytes, http_body_bytes, http_cache_bytes, dns_start, dns_time, syn_start, tcp_cnxting, send_ts, send, get_sent, first_bytes, app_rtt, \
-            end_time, data_trans, full_load_time, content_load_time, tabId, current_wifi_quality, cpu_idle, cpu_perc, mem_free, mem_used, mem_perc, ping_gw, \
-            ping_dns, ping_google, nr_annoying, location, obj_aborted, clientID, cmt)
+            '%s', %d, %d, %d, %d, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', %d, '%s', %d, %d, '%s') ''' \
+            % (table_name, log_reason, ff_version, method, host, uri, request_event_ts, content_type, content_length,
+               accept_encoding, content_encoding, server_cnxs, server_http, http_id, session_start, session_url,
+               if_complete_cache, localAddress, localPort, remoteAddress, remotePort, response_code, http_request_bytes,
+               http_header_bytes, http_body_bytes, http_cache_bytes, dns_start, dns_time, syn_start, tcp_cnxting,
+               send_ts, send, get_sent, first_bytes, app_rtt, end_time, data_trans, full_load_time, content_load_time,
+               tabId, current_wifi_quality, cpu_idle, cpu_perc, mem_free, mem_used, mem_perc, ping_gw, ping_dns,
+               ping_google, nr_annoying, location, obj_aborted, clientID, cmt)
             cursor.execute(state)
             self.conn.commit()
         sid_inserted = self._generate_sid_on_table()
@@ -159,14 +164,16 @@ class DBClient:
 
     def _generate_sid_on_table(self):
         max_sid = self._select_max_sid()
-        query = "select distinct on (clientID, session_start) clientID, session_start from %s where sid is NULL order by session_start" % self.dbconfig['rawtable']
+        query = '''select distinct on (clientID, session_start) clientID, session_start from %s where sid is NULL
+        order by session_start''' % self.dbconfig['rawtable']
         res = self.execute_query(query)
         logger.debug('Found %d sessions to insert', len(res))
         for i in range(len(res)):
             clientid = res[i][0]
             session_start = res[i][1]
             max_sid += 1
-            query = "update %s set sid = %d where session_start = \'%s\' and clientID = \'%s\'" % (self.dbconfig['rawtable'], max_sid, session_start, clientid)
+            query = '''update %s set sid = %d where session_start = \'%s\' and clientID = \'%s\'''' \
+                    % (self.dbconfig['rawtable'], max_sid, session_start, clientid)
             self.execute_update(query)
         return max_sid
 
@@ -199,8 +206,9 @@ class DBClient:
         session_start = list(set([x[0] for x in res]))[0]
         end_time = max(list(set([x[1] for x in res])))
         forced_load_time = int((end_time - session_start).total_seconds() * 1000)
-        update = '''update %s set full_load_time = %d where sid = %d''' % (self.dbconfig['rawtable'], forced_load_time, sid)
-        self.execute_update( update )
+        update = '''update %s set full_load_time = %d where sid = %d''' \
+                 % (self.dbconfig['rawtable'], forced_load_time, sid)
+        self.execute_update(update)
         return forced_load_time
         
     def check_for_zero_full_load_time(self):

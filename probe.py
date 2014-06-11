@@ -36,4 +36,4 @@ if __name__ == '__main__':
         new_fn = backupdir + '/' + plugin_out_file.split('/')[-1] + '.run%d' % i
         os.rename(plugin_out_file, new_fn)
         logger.debug('Saved plugin file for run n.%d: %s' % (i,new_fn))
-        
+

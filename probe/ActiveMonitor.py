@@ -66,7 +66,6 @@ class ActiveMonitor():
     # tracefile = traceroute files
     # mtrfname = mtr file 
     def build_trace(self, target, tracefile, mtrfile):
-        result = {}
         t = TracerouteParser(target)
         t.parse_traceroutefile(tracefile)
         try:

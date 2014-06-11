@@ -28,6 +28,7 @@ import os
 
 logger = logging.getLogger('FFLauncher')
 
+
 class BrowserThread(threading.Thread):
     def __init__(self, cmd, outf, errf):
         self.cmd = cmd
@@ -47,8 +48,8 @@ class BrowserThread(threading.Thread):
             self.process = subprocess.Popen(self.cmd, stdout=FNULL, stderr=FNULL, shell=True)
             memtable = []
             cputable = []
-            while self.process.poll() == None:
-                arr = psutil.cpu_percent(interval=0.1,percpu=True)
+            while self.process.poll() is None:
+                arr = psutil.cpu_percent(interval=0.1, percpu=True)
                 cputable.append(sum(arr) / float(len(arr)))
                 memtable.append(psutil.virtual_memory().percent)
                 time.sleep(1)
