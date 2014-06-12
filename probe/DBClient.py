@@ -22,8 +22,10 @@ import Utils
 import sys
 from Configuration import Configuration
 import logging
+import json
 
 logger = logging.getLogger('DBClient')
+
 
 class DBClient:
     def __init__(self, config):
@@ -44,17 +46,48 @@ class DBClient:
     def create_plugin_table(self):
         #create a Table for the Firefox plugin
         cursor = self.conn.cursor()
-        cursor.execute('''CREATE TABLE IF NOT EXISTS %s (log_reason TEXT, ff_version TEXT, method TEXT, host TEXT,
-        uri TEXT, request_event_ts TIMESTAMP, content_type TEXT, content_length INT4, AcceptEncoding TEXT,
-        ContentEncoding TEXT, server_cnxs TEXT, server_http TEXT, http_id INT8, session_start TIMESTAMP,
-        session_url TEXT, if_complete_cache INT4, localAddress INET, localPort INT4, remoteAddress INET,
-        remotePort INT4, response_code INT4, http_request_bytes INT4, http_header_bytes INT4, http_body_bytes INT4,
-        http_cache_bytes INT4, dns_start TIMESTAMP, dns_time INT4, syn_start TIMESTAMP, tcp_cnxting INT4,
-        send_ts TIMESTAMP, send INT4, GET_sent TIMESTAMP, First_Bytes TIMESTAMP, app_rtt INT4, EndTime TIMESTAMP,
-        data_trans INT4, full_load_time INT4, content_load_time INT4, tabId INT8, current_wifi_quality TEXT,
-        cpu_idle TEXT, cpu_percent_ffx TEXT, mem_free TEXT, mem_used TEXT, mem_percent_ffx TEXT, ping_gw TEXT,
-        ping_dns TEXT, ping_google TEXT, nr_annoying INT4, location TEXT, obj_aborted INT4, clientID INT8,
-        cmt TEXT, sid INT8)''' % self.dbconfig['rawtable'])
+
+        cursor.execute('''CREATE TABLE IF NOT EXISTS %s (
+        uri TEXT,
+        host TEXT,
+        request_ts TIMESTAMP,
+        content_type TEXT,
+        content_len INT,
+        keep_alive BOOLEAN,
+        httpid INT,
+        session_start TIMESTAMP,
+        session_url TEXT,
+        cache BOOLEAN,
+        local_ip TEXT,
+        local_port INT,
+        remote_ip TEXT,
+        remote_port INT,
+        response_code INT,
+        get_bytes INT,
+        header_bytes INT,
+        body_bytes INT,
+        cache_bytes INT,
+        dns_start TIMESTAMP,
+        dns_time INT,
+        syn_start TIMESTAMP,
+        syn_time INT,
+        get_sent_ts TIMESTAMP,
+        first_bytes_rcv TIMESTAMP,
+        app_rtt INT,
+        end_time TIMESTAMP,
+        rcv_time INT,
+        full_load_time INT,
+        annoy BOOLEAN,
+        tab_id TEXT,
+        cpu_percent INT,
+        mem_percent INT,
+        ping_gateway TEXT,
+        ping_google TEXT,
+        probe_id INT,
+        sid INT,
+        is_sent BOOLEAN
+        )
+        ''' % self.dbconfig['rawtable'])
         self.conn.commit()
 
     def create_activemeasurement_table(self):
@@ -67,74 +100,18 @@ class DBClient:
     def write_plugin_into_db(self, datalist, stats):
         #insert a directory into the db
         cursor = self.conn.cursor()
+        table_name = self.dbconfig['rawtable']
+        insert_query = 'INSERT INTO ' + table_name + ' (%s) values (%s)'
         for obj in datalist:
-            table_name = self.dbconfig['rawtable']
-            log_reason = str(obj["log"])
-            ff_version = str(obj["ff_v"])
-            method = str(obj["method"])
-            host = str(obj["host"])
-            uri = str(obj["uri"])
-            request_event_ts = str(obj["ts"])
-            content_type = str(obj["type"])
-            content_length = int(obj["len"])
-            accept_encoding = str(obj["C_Encode"])
-            content_encoding = str(obj["Encode"])
-            server_cnxs = str(obj["s_cnxs"])
-            server_http = str(obj["s_http"])
-            http_id = int(obj["httpid"])
-            session_start =  str(obj["pageStart"])
-            session_url = str(obj["pageURL"])
-            if_complete_cache =  int(obj["cache"])
-            localAddress = str(obj["cIP"])
-            localPort = int(obj["cPort"])
-            remoteAddress =  str(obj["sIP"])
-            remotePort = int(obj["sPort"])
-            response_code =  int(obj["status"])
-            http_request_bytes = int(obj["GET_Byte"])
-            http_header_bytes = int(obj["HeaderByte"])
-            http_body_bytes = int(obj["BodyByte"])
-            http_cache_bytes = int(obj["CacheByte"])
-            dns_start = str(obj["dns1"])
-            dns_time = int(obj["dns"])
-            syn_start = str(obj["tcp1"])
-            tcp_cnxting = int(obj["tcp"])
-            send_ts = str(obj["sendTS"])
-            send = int(obj["send"])
-            get_sent = str(obj["http1"])
-            first_bytes = str(obj["http2"])
-            app_rtt = int(obj["http"])
-            end_time =  str(obj["EndTS"])
-            data_trans = int(obj["rcv"])
-            full_load_time = int(obj["onLoad"])
-            content_load_time =  int(obj["onContent"])
-            tabId = int(obj["tabId"])
-            current_wifi_quality = str(obj["wifi"])
-            cpu_idle = str(obj["CPUidle"])
-            cpu_perc = str(stats[str(obj["pageURL"])]['cpu'])
-            mem_free = str(obj["MEMfree"])
-            mem_used = str(obj["MEMused"])
-            mem_perc = str(stats[str(obj["pageURL"])]['mem'])
-            ping_gw = str(obj["pingGW"])
-            ping_dns = str(obj["pingDNS"])
-            ping_google = str(obj["pingG"])
-            nr_annoying = int(obj["AnnoyNr"])
-            location = str(obj["location"])
-            obj_aborted = int(obj["IfAborted"])
-            clientID = int(obj["ID"])
-            cmt = str(obj["cmt"])
+            data = json.loads(json.dumps(obj))
+            cols = ', '.join(data)
+            vals = ', '.join('?' * len(data))
+            to_execute = insert_query % (cols, vals)
+            print to_execute
 
-            state = '''INSERT INTO %s VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', %d, '%s', '%s', '%s', '%s',
-            %d, '%s', '%s', %d, '%s', %d, '%s', %d, %d, %d, %d, %d, %d, '%s', %d, '%s', %d, '%s', %d, '%s', '%s', %d,
-            '%s', %d, %d, %d, %d, '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', %d, '%s', %d, %d, '%s') ''' \
-            % (table_name, log_reason, ff_version, method, host, uri, request_event_ts, content_type, content_length,
-               accept_encoding, content_encoding, server_cnxs, server_http, http_id, session_start, session_url,
-               if_complete_cache, localAddress, localPort, remoteAddress, remotePort, response_code, http_request_bytes,
-               http_header_bytes, http_body_bytes, http_cache_bytes, dns_start, dns_time, syn_start, tcp_cnxting,
-               send_ts, send, get_sent, first_bytes, app_rtt, end_time, data_trans, full_load_time, content_load_time,
-               tabId, current_wifi_quality, cpu_idle, cpu_perc, mem_free, mem_used, mem_perc, ping_gw, ping_dns,
-               ping_google, nr_annoying, location, obj_aborted, clientID, cmt)
-            cursor.execute(state)
+            cursor.execute(to_execute, data.values())
             self.conn.commit()
+
         sid_inserted = self._generate_sid_on_table()
         
 
