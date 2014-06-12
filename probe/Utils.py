@@ -21,6 +21,7 @@
 import json
 import fileinput
 
+
 # quantile in (0,1)
 def compute_quantile(data, quantile):
     if quantile < 0 or quantile > 1:
@@ -33,11 +34,13 @@ def compute_quantile(data, quantile):
 def add_wildcard_to_addr(addr):
     return '%'+addr.strip()+'%'
 
+
 def __file_to_array(filename, separator):
     fileobj = open(filename, "r")
     str_ = fileobj.read()
     fileobj.close()
     return str_.split(separator)
+
 
 #Read json formatted file.
 def read_file(filename, separator):

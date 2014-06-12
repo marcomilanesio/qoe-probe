@@ -98,7 +98,7 @@ class DBClient:
         self.conn.commit()
         
     def write_plugin_into_db(self, datalist, stats):
-        #insert a directory into the db
+        #read json objects from each line of the plugin file
         cursor = self.conn.cursor()
         table_name = self.dbconfig['rawtable']
         insert_query = 'INSERT INTO ' + table_name + ' (%s) values (%s)'
@@ -114,7 +114,6 @@ class DBClient:
 
         sid_inserted = self._generate_sid_on_table()
         
-
     def load_to_db(self, stats):
         datalist = Utils.read_file(self.dbconfig['pluginoutfile'], "\n")
         if len(datalist) > 0:
@@ -141,7 +140,7 @@ class DBClient:
 
     def _generate_sid_on_table(self):
         max_sid = self._select_max_sid()
-        query = '''select distinct on (clientID, session_start) clientID, session_start from %s where sid is NULL
+        query = '''select distinct on (probe_id, session_start) probe_id, session_start from %s where sid is NULL
         order by session_start''' % self.dbconfig['rawtable']
         res = self.execute_query(query)
         logger.debug('Found %d sessions to insert', len(res))
@@ -149,7 +148,7 @@ class DBClient:
             clientid = res[i][0]
             session_start = res[i][1]
             max_sid += 1
-            query = '''update %s set sid = %d where session_start = \'%s\' and clientID = \'%s\'''' \
+            query = '''update %s set sid = %d where session_start = \'%s\' and probe_id = \'%s\'''' \
                     % (self.dbconfig['rawtable'], max_sid, session_start, clientid)
             self.execute_update(query)
         return max_sid
@@ -178,7 +177,7 @@ class DBClient:
 
     def force_update_full_load_time(self, sid):
         import datetime
-        q = '''select session_start, endtime from %s where sid = %d''' % (self.dbconfig['rawtable'], sid)
+        q = '''select session_start, end_time from %s where sid = %d''' % (self.dbconfig['rawtable'], sid)
         res = self.execute_query(q)
         session_start = list(set([x[0] for x in res]))[0]
         end_time = max(list(set([x[1] for x in res])))
