@@ -94,7 +94,7 @@ class DBClient:
         cursor = self.conn.cursor()
         # PSQL > 9.2 change TEXT to JSON
         cursor.execute('''CREATE TABLE IF NOT EXISTS %s (sid INT8, session_url TEXT,
-        remoteAddress INET, ping TEXT, trace TEXT, sent BOOLEAN)''' % self.dbconfig['activetable'])
+        remote_ip INET, ping TEXT, trace TEXT, sent BOOLEAN)''' % self.dbconfig['activetable'])
         self.conn.commit()
         
     def write_plugin_into_db(self, datalist, stats):
