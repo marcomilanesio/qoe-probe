@@ -6,6 +6,8 @@ import logging.config
 from probe.Configuration import Configuration
 from probe.FFLauncher import FFLauncher
 from probe.DBClient import DBClient
+from probe.ActiveMeasurement import Monitor
+from probe.JSONClient import JSONClient
 
 logging.config.fileConfig('logging.conf')
 
@@ -35,5 +37,9 @@ if __name__ == '__main__':
         logger.debug('Ended browsing run n.%d' % i)
         new_fn = backupdir + '/' + plugin_out_file.split('/')[-1] + '.run%d' % i
         os.rename(plugin_out_file, new_fn)
-        logger.debug('Saved plugin file for run n.%d: %s' % (i,new_fn))
+        logger.debug('Saved plugin file for run n.%d: %s' % (i, new_fn))
+        monitor = Monitor(config)
+        monitor.run_active_measurement()
 
+    #jc = JSONClient(config)
+    #jc.prepare_and_send()

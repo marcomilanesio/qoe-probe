@@ -48,6 +48,7 @@ class DBClient:
         cursor = self.conn.cursor()
 
         cursor.execute('''CREATE TABLE IF NOT EXISTS %s (
+        row_id SERIAL,
         uri TEXT,
         host TEXT,
         request_ts TIMESTAMP,
@@ -112,15 +113,21 @@ class DBClient:
         #read json objects from each line of the plugin file
         cursor = self.conn.cursor()
         table_name = self.dbconfig['rawtable']
-        insert_query = 'INSERT INTO ' + table_name + ' (%s) values %r'
+        insert_query = 'INSERT INTO ' + table_name + ' (%s) values %r RETURNING row_id'
+        update_query = 'UPDATE ' + table_name + ' SET mem_percent = %s, cpu_percent = %s where row_id = %d'
         for obj in datalist:
+            url = DBClient._unicode_to_ascii(obj['session_url'])
             cols = ', '.join(obj)
             to_execute = insert_query % (cols, tuple(DBClient._convert_to_ascii(obj.values())))
             #print to_execute
             cursor.execute(to_execute)
             self.conn.commit()
+            row_id = cursor.fetchone()[0]
+            to_update = update_query % (stats[url]['mem'], stats[url]['cpu'], row_id)
+            cursor.execute(to_update)
+            self.conn.commit()
 
-        sid_inserted = self._generate_sid_on_table()
+        self._generate_sid_on_table()
         
     def load_to_db(self, stats):
         datalist = Utils.read_file(self.dbconfig['pluginoutfile'], "\n")
@@ -164,6 +171,29 @@ class DBClient:
     def quit_db(self):
         self.conn.close()
 
+    def get_inserted_sid_addresses(self):
+        result = {}
+        q = '''select distinct on (sid, session_url, remote_ip) sid, session_url, remote_ip
+        FROM %s where sid not in (select distinct sid from active)''' % self.dbconfig['rawtable']
+        res = self.execute_query(q)
+        for tup in res:
+            cur_sid = tup[0]
+            cur_url = tup[1]
+            cur_addr = tup[2]
+            if cur_addr == '0.0.0.0':
+                continue
+            if cur_sid in result.keys():
+                if result[cur_sid]['url'] == cur_url:
+                    result[cur_sid]['address'].append(cur_addr)
+                else:
+                    result[cur_sid]['url'] = cur_url
+                    result[cur_sid]['address'].append(cur_addr)
+            else:
+                result[cur_sid] = {'url': cur_url, 'address': [cur_addr]}
+        #print 'result _get_inserted_sid_addresses', result
+        return result
+
+
     def insert_active_measurement(self, tot_active_measurement):
         #data['ping'] = json obj
         #data['trace'] = json obj
@@ -177,11 +207,11 @@ class DBClient:
                 query = '''INSERT into %s values ('%d','%s','%s','%s','%s','%s')
                 ''' % (self.dbconfig['activetable'], sid, url, ip, ping, trace, 'f') #false as not sent yet
                 cur.execute(query)
-                logger.info('inserted active measurements for sid %s: ' % sid)
+            logger.info('inserted active measurements for sid %s: ' % sid)
         self.conn.commit()
     
     def get_table_names(self):
-        return {'raw': self.dbconfig['rawtable'] ,'active': self.dbconfig['activetable']}
+        return {'raw': self.dbconfig['rawtable'],'active': self.dbconfig['activetable']}
 
     def force_update_full_load_time(self, sid):
         import datetime

@@ -25,6 +25,7 @@ from probe.Configuration import Configuration
 import logging
 import threading
 import os
+import re
 
 logger = logging.getLogger('FFLauncher')
 
@@ -85,26 +86,35 @@ class FFLauncher():
         logger.debug('Loaded configuration')
 
     def browse_urls(self):
-        out = open(self.ffconfig['logfile'], 'a')
-        for line in open(self.ffconfig['urlfile']):
-            logger.info('Browsing %s' % line.strip())
-            k = 'http://%s/' % line.strip()
-            self.osstats[k] = {'mem': 0.0, 'cpu': 0.0}
-            cmdstr = "xvfb-run --wait=0 %s/firefox -P %s -url %s" % (self.ffconfig['dir'], self.ffconfig['profile'], line)
-            cmd = BrowserThread(cmdstr, self.ffconfig['thread_outfile'], self.ffconfig['thread_errfile'])
-            t = int(self.ffconfig['thread_timeout'])
-            flag, mem, cpu = cmd.run(timeout=t)
-
-            if not flag:
-                self.osstats[k]['mem'] = mem
-                self.osstats[k]['cpu'] = cpu
-                logger.info('mem = %.2f, cpu = %.2f' % (self.osstats[k]['mem'], self.osstats[k]['cpu']))
+        for url in open(self.ffconfig['urlfile']):
+            if not re.match('http://', url):
+                use = 'http://' + url.strip()
             else:
-                logger.warning('Problems in browsing thread. Waiting for xvfb to restart...')
-                time.sleep(5)
-                return None
-        out.close()
+                use = url.strip()
+            if use[-1] != '\/':
+                use += '/'
+            self.osstats[use] = self._browse_url(use)
+
         return self.osstats
+
+    def _browse_url(self, url):
+        #out = open(self.config['logfile'], 'a')
+        logger.info('Browsing %s', url)
+        res = {'mem': 0.0, 'cpu': 0.0}
+        cmdstr = "xvfb-run --wait=0 %s/firefox -P %s -url %s" % (self.ffconfig['dir'], self.ffconfig['profile'], url)
+        cmd = BrowserThread(cmdstr, self.ffconfig['thread_outfile'], self.ffconfig['thread_errfile'])
+        t = int(self.ffconfig['thread_timeout'])
+        flag, mem, cpu = cmd.run(timeout=t)
+
+        if not flag:
+            res['mem'] = mem
+            res['cpu'] = cpu
+            logger.info('%s: mem = %.2f, cpu = %.2f' % (url, res['mem'], res['cpu']))
+        else:
+            logger.warning('Problems in browsing thread. Waiting for xvfb to restart...')
+            time.sleep(5)
+        #out.close()
+        return res
 
     '''
     def dump_data_on_error(self):
