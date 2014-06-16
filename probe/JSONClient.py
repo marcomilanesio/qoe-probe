@@ -28,6 +28,7 @@ import logging
 
 logger = logging.getLogger('JSONClient')
 
+
 class JSONClient():
     def __init__(self, config):
         self.activetable = config.get_database_configuration()['activetable']
@@ -35,10 +36,10 @@ class JSONClient():
         self.srv_ip = config.get_jsonserver_configuration()['ip']
         self.srv_port = int(config.get_jsonserver_configuration()['port'])
         self.db = DBClient(config)
-        self.clientid = self._get_client_id_from_db()
+        self.probeid = self._get_client_id_from_db()
     
     def _get_client_id_from_db(self):
-        q = 'select distinct on (clientID) clientID from %s ' % self.rawtable
+        q = 'select distinct on (probe_id) probe_id from %s ' % self.rawtable
         r = self.db.execute_query(q)
         assert len(r) == 1
         return int(r[0][0])
@@ -47,11 +48,13 @@ class JSONClient():
         query = 'select * from %s where not sent' % self.activetable
         res = self.db.execute_query(query)
         sids = list(set([r[0] for r in res]))
-        local_data = {'clientid': self.clientid, 'local': self._prepare_local_data(sids)}
+        local_data = {'probeid': self.probeid, 'local': self._prepare_local_data(sids)}
         str_to_send = "local: " + json.dumps(local_data)
         logger.info('sending local data... %s' % self.send_to_srv(str_to_send, is_json=True))
+        print str_to_data
+        exit()
         for row in res:
-            active_data = {'clientid': self.clientid, 'ping': None, 'trace': []}
+            active_data = {'probeid': self.probeid, 'ping': None, 'trace': []}
             count = 0
             sid = int(row[0])
             session_url = row[1]
@@ -82,10 +85,9 @@ class JSONClient():
             update_query = '''update %s set sent = 't' where sid = %d''' % ( self.activetable, int(sent_sid) )
             self.db.execute_update(update_query)
             logger.info('updated sent sid on %s' % self.activetable)
-    
-    
+
     def _prepare_local_data(self, sids):
-        l = LocalDiagnosisManager(self.db, self.clientid, sids)
+        l = LocalDiagnosisManager(self.db, self.probeid, sids)
         return l.do_local_diagnosis()
         
     def send_to_srv(self, data, is_json=False):
@@ -119,4 +121,4 @@ if __name__ == '__main__':
     c = Configuration(conf_file)
     j = JSONClient(c)
     print j.send_request_for_diagnosis(url, 6)
-    
+
