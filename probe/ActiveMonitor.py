@@ -70,7 +70,7 @@ class ActiveMonitor():
         result = {}
         t = TracerouteParser(target)
         t.parse_traceroutefile(tracefile)
-        try:
+	try:
             os.remove(tracefile) # remove packed trace file as root
         except OSError, e:
             logger.error('Error in removing packed tracefile %s' % tracefile)
@@ -108,7 +108,7 @@ class ActiveMonitor():
         trace_icmp = "traceroute -n -I -m %d %s" % (maxttl, target)
         trace_mtr = "mtr -n --report --report-cycles 20 %s" % target
         #cmds = [trace_udp,trace_tcpsyn,trace_icmp,trace_mtr]
-	cmds = [trace_udp,trace_tcpsyn,trace_icmp]        
+	cmds = [trace_icmp]        
 	traceroute_fnames = []
         mtrfilename = '%s.mtr' % target
         thread_list = []

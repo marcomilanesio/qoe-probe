@@ -27,7 +27,7 @@ class TracerouteParser():
         self.target_hop = 0
 
     def add_to_dictionary(self, hop, addr, rtts):
-        if str(hop) not in self.nodes.keys():
+	if str(hop) not in self.nodes.keys():
             self.nodes[str(hop)] = [(addr, rtts)]
         else:
             if addr == self.nodes[str(hop)][0][0]:
@@ -42,9 +42,11 @@ class TracerouteParser():
         f = open(trfile, 'r')
         arr = f.readlines()
         f.close()
-        slices_starts = [i for i, x in enumerate(arr) if re.match("traceroute", x) or re.match("\n", x)]
-        all_traces = [[slices_starts[x], slices_starts[x+1]] for x in range(0, len(slices_starts)-1)]
-        
+	slices_starts = [i for i, x in enumerate(arr) if re.match("traceroute", x) or re.match("\n", x)]
+	if len(slices_starts)-1 < 1:
+	    all_traces = all_traces = [[slices_starts[0], len(arr)-1]]
+	else:
+            all_traces = [[slices_starts[x], slices_starts[x+1]] for x in range(0, len(slices_starts)-1)]
         for interval in all_traces:
             trace = arr[interval[0] + 1: interval[1]]
             for step in trace:

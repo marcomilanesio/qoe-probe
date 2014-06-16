@@ -89,7 +89,7 @@ class JSONClient():
         return l.do_local_diagnosis()
         
     def send_to_srv(self, data, is_json=False):
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.connect((self.srv_ip, self.srv_port))
         if not is_json:
             s.sendall(json.dumps(data) + "\n")

@@ -102,7 +102,7 @@ class DBClient:
                     %d, %d, '%s', '%s', '%s', '%s', %d, %d)
                     ''' % (self.dbconfig['rawtable'], str(obj["host"]),\
                      str(obj["uri"]), str(obj["request_ts"]), str(obj["content_type"]), int(obj["content_len"]), \
-                     str(obj["keep_alive"]), int(obj["httpid"]), str(obj["session_start"]), str(obj["session_url"]), int(obj["cache"]), \
+                     int(obj["httpid"]), str(obj["session_start"]), str(obj["session_url"]), int(obj["cache"]), \
                      str(obj["local_ip"]), int(obj["local_port"]), str(obj["remote_ip"]), int(obj["remote_port"]), int(obj["response_code"]), int(obj["get_bytes"]), \
                      int(obj["header_bytes"]), int(obj["body_bytes"]), int(obj["cache_bytes"]), str(obj["dns_start"]), int(obj["dns_time"]), str(obj["syn_start"]), \
                      int(obj["syn_time"]), int(obj["is_sent"]), str(obj["get_sent_ts"]), str(obj["first_bytes_rcv"]), int(obj["app_rtt"]), str(obj["end_time"]), \

@@ -129,13 +129,13 @@ def updatebyHar(tstatdata,filename):
 			fields_to_add = {'session_url': session_url,'full_load_time': str(onLoad),
 					'host': str(request_host), 'uri': str(request_url),
 					'request_ts': str(request_ts), 'content_type': str(cnt_type), 'content_len': "0", 
-					'keep_alive': "null", 'session_start': str(session_start),
+					'session_start': str(session_start),
 					'cache': "0", 'response_code': str(status), 'get_bytes': "-1", 'header_bytes': "-1", 
 					'body_bytes': str(responde_body_size), 'cache_bytes': "0", 'dns_start': "1970-01-01 01:00:00", 
 					'dns_time': str(dns), 'syn_start': "1970-01-01 01:00:00", 
 					'is_sent': "0", 'get_sent_ts': "1970-01-01 01:00:00", 'first_bytes_rcv': str(firstByte), 
 					'end_time': str(endTS),'rcv_time': str(receive), 'tab_id': "0", 
-					'ping_gateway': "null", 'ping_google': "null", 'annoy': "0"}
+					'ping_gateway': "0", 'ping_google': "0", 'annoy': "0"}
 						
 			line.update(fields_to_add)
 			#print line
