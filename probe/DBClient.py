@@ -96,20 +96,28 @@ class DBClient:
         cursor.execute('''CREATE TABLE IF NOT EXISTS %s (sid INT8, session_url TEXT,
         remote_ip INET, ping TEXT, trace TEXT, sent BOOLEAN)''' % self.dbconfig['activetable'])
         self.conn.commit()
-        
+
+    @staticmethod
+    def _unicode_to_ascii(item):
+        return item.encode('ascii', 'ignore')
+
+    @staticmethod
+    def _convert_to_ascii(arr):
+        res = []
+        for i in arr:
+            res.append(DBClient._unicode_to_ascii(i))
+        return res
+
     def write_plugin_into_db(self, datalist, stats):
         #read json objects from each line of the plugin file
         cursor = self.conn.cursor()
         table_name = self.dbconfig['rawtable']
-        insert_query = 'INSERT INTO ' + table_name + ' (%s) values (%s)'
+        insert_query = 'INSERT INTO ' + table_name + ' (%s) values %r'
         for obj in datalist:
-            data = json.loads(json.dumps(obj))
-            cols = ', '.join(data)
-            vals = ', '.join('?' * len(data))
-            to_execute = insert_query % (cols, vals)
-            print to_execute
-
-            cursor.execute(to_execute, data.values())
+            cols = ', '.join(obj)
+            to_execute = insert_query % (cols, tuple(DBClient._convert_to_ascii(obj.values())))
+            #print to_execute
+            cursor.execute(to_execute)
             self.conn.commit()
 
         sid_inserted = self._generate_sid_on_table()
