@@ -19,6 +19,7 @@ if __name__ == '__main__':
     backupdir = sys.argv[3]
     logger = logging.getLogger('probe')
     config = Configuration(conf_file)
+    '''
     plugin_out_file = config.get_database_configuration()['pluginoutfile']
     logger.debug('Backup dir set at: %s' % backupdir)
     ff_launcher = FFLauncher(config)
@@ -40,6 +41,6 @@ if __name__ == '__main__':
         logger.debug('Saved plugin file for run n.%d: %s' % (i, new_fn))
         monitor = Monitor(config)
         monitor.run_active_measurement()
-
-    #jc = JSONClient(config)
-    #jc.prepare_and_send()
+    '''
+    jc = JSONClient(config)
+    jc.prepare_and_send()

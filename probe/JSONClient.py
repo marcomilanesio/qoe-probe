@@ -48,13 +48,11 @@ class JSONClient():
         query = 'select * from %s where not sent' % self.activetable
         res = self.db.execute_query(query)
         sids = list(set([r[0] for r in res]))
-        local_data = {'probeid': self.probeid, 'local': self._prepare_local_data(sids)}
+        local_data = {'clientid': self.probeid, 'local': self._prepare_local_data(sids)}
         str_to_send = "local: " + json.dumps(local_data)
         logger.info('sending local data... %s' % self.send_to_srv(str_to_send, is_json=True))
-        print str_to_data
-        exit()
         for row in res:
-            active_data = {'probeid': self.probeid, 'ping': None, 'trace': []}
+            active_data = {'clientid': self.probeid, 'ping': None, 'trace': []}
             count = 0
             sid = int(row[0])
             session_url = row[1]
@@ -66,18 +64,20 @@ class JSONClient():
                     empty_targets = [t for t in steps if t[0] == '???' or t[1] == []]
                     for empty in empty_targets:
                         steps.remove(empty)
-                        count+=1
+                        count += 1
             active_data['ping'] = {'sid': sid, 'session_url': session_url, 'remoteaddress': remoteaddress, 'min': ping['min'], 'max': ping['max'], 'avg': ping['avg'], 'std': ping['std']}
-            step_nr = 0
+
             for step in trace:
-                step_nr += 1
-                values = step[0]
-                target = values[0]
-                rtts = values[1]
-                if len(rtts) > 0:
-                    active_data['trace'].append({ 'sid': sid, 'remoteaddress': remoteaddress, 'step': step_nr, 'step_address': target, 'min': min(rtts), 'max' : max(rtts), 'avg': numpy.mean(rtts), 'std': numpy.std(rtts) })
-                else:
-                    active_data['trace'].append({ 'sid': sid, 'remoteaddress': remoteaddress, 'step': step_nr, 'step_address': target, 'min': -1, 'max' : -1, 'avg': -1, 'std': -1 })
+                step_nr = step['hop_nr']
+                step_addr = step['ip_addr']
+                step_rtt = step['rtt']
+                step_alias = step['endpoints']
+                '''
+                @TODO
+                Consider different endpoints
+                '''
+                active_data['trace'].append({'sid': sid, 'remoteaddress': remoteaddress, 'step': step_nr, 'step_address': step_addr, 'rtt': step_rtt})
+
             #logger.debug('Removed %d empty step(s) from secondary path to %s.' % (count, remoteaddress))
             logger.info('sending ping/trace data about [%s]: %s ' % (remoteaddress,  self.send_to_srv(active_data)))
         
@@ -102,7 +102,7 @@ class JSONClient():
         return result
 
     def send_request_for_diagnosis(self, url, time_range=6):
-        data = {'clientid': self.clientid, 'url': url, 'time_range': time_range}
+        data = {'clientid': self.probeid, 'url': url, 'time_range': time_range}
         str_to_send = 'check: ' + json.dumps(data)
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.connect((self.srv_ip, self.srv_port))
