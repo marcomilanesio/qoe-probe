@@ -22,6 +22,7 @@ import subprocess
 import json
 import re
 import logging
+import numpy
 from DBClient import DBClient
 
 logger = logging.getLogger('Active')
@@ -105,7 +106,7 @@ class TracerouteHop(object):
     def __init__(self, hop_nr):
         self.hop_nr = int(hop_nr)
         self.ip_addr = None
-        self.rtt = 0.0
+        self.rtt = {'min': 0.0, 'max': 0.0, 'avg': 0.0, 'std': 0.0}
         self.endpoints = []
 
     def add_measurement(self, arr_data):
@@ -122,12 +123,15 @@ class TracerouteHop(object):
         clean = [x for x in arr_data if x not in _endpoints and x != '*']
 
         if len(clean) > 0:
-            self.rtt = min(map(float, clean))
+            self.rtt['min'] = min(map(float, clean))
+            self.rtt['max'] = max(map(float, clean))
+            self.rtt['avg'] = numpy.mean(map(float, clean))
+            self.rtt['std'] = numpy.std(map(float, clean))
         else:
             self.rtt = -1
 
     def __str__(self):
-        return '%d: %s, %.3f %s' % (self.hop_nr, self.ip_addr, self.rtt, str(self.endpoints))
+        return '%d: %s, %.3f %s' % (self.hop_nr, self.ip_addr, self.rtt['avg'], str(self.endpoints))
 
 
 class Monitor(object):

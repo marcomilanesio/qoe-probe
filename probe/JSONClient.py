@@ -76,11 +76,13 @@ class JSONClient():
                 @TODO
                 Consider different endpoints
                 '''
-                active_data['trace'].append({'sid': sid, 'remoteaddress': remoteaddress, 'step': step_nr, 'step_address': step_addr, 'rtt': step_rtt})
+                active_data['trace'].append({'sid': sid, 'remoteaddress': remoteaddress, 'step': step_nr,
+                                             'step_address': step_addr, 'rtt': step_rtt})
 
             #logger.debug('Removed %d empty step(s) from secondary path to %s.' % (count, remoteaddress))
             logger.info('sending ping/trace data about [%s]: %s ' % (remoteaddress,  self.send_to_srv(active_data)))
-        
+
+
         for sent_sid in sids:
             update_query = '''update %s set sent = 't' where sid = %d''' % ( self.activetable, int(sent_sid) )
             self.db.execute_update(update_query)
@@ -91,6 +93,7 @@ class JSONClient():
         return l.do_local_diagnosis()
         
     def send_to_srv(self, data, is_json=False):
+        print data
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.connect((self.srv_ip, self.srv_port))
         if not is_json:

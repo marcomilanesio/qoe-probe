@@ -41,6 +41,11 @@ if __name__ == '__main__':
         logger.debug('Saved plugin file for run n.%d: %s' % (i, new_fn))
         monitor = Monitor(config)
         monitor.run_active_measurement()
+        logger.debug('Ended Active probing for run n.%d' % i)
+        for tracefile in os.listdir('.'):
+            if tracefile.endswith('.traceroute'):
+                new_fn_trace = backupdir + '/' + tracefile + '.run%d' % i
+                os.rename(tracefile, new_fn_trace)
     '''
     jc = JSONClient(config)
     jc.prepare_and_send()
