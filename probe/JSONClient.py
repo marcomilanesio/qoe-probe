@@ -84,7 +84,7 @@ class JSONClient():
 
 
         for sent_sid in sids:
-            update_query = '''update %s set sent = 't' where sid = %d''' % ( self.activetable, int(sent_sid) )
+            update_query = '''update %s set sent = 't' where sid = %d''' % (self.activetable, int(sent_sid))
             self.db.execute_update(update_query)
             logger.info('updated sent sid on %s' % self.activetable)
 
@@ -93,7 +93,6 @@ class JSONClient():
         return l.do_local_diagnosis()
         
     def send_to_srv(self, data, is_json=False):
-        print data
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.connect((self.srv_ip, self.srv_port))
         if not is_json:
