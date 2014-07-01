@@ -34,6 +34,7 @@ class JSONClient():
         self.rawtable = config.get_database_configuration()['rawtable']
         self.srv_ip = config.get_jsonserver_configuration()['ip']
         self.srv_port = int(config.get_jsonserver_configuration()['port'])
+	self.json_file = config.get_jsonserver_configuration()['file']
         self.db = DBClient(config)
         self.clientid = self._get_client_id_from_db()
     
@@ -49,6 +50,8 @@ class JSONClient():
         sids = list(set([r[0] for r in res]))
         local_data = {'clientid': self.clientid, 'local': self._prepare_local_data(sids)}
         str_to_send = "local: " + json.dumps(local_data)
+	outfile = open(self.json_file, 'a')
+	#outfile.write(str_to_send+'\n')	
 	logger.info('sending local data... %s' % self.send_to_srv(str_to_send, is_json=True))
         for row in res:
             active_data = {'clientid': self.clientid, 'ping': None, 'trace': []}
@@ -77,7 +80,9 @@ class JSONClient():
                     active_data['trace'].append({ 'sid': sid, 'remoteaddress': remoteaddress, 'step': step_nr, 'step_address': target, 'min': -1, 'max' : -1, 'avg': -1, 'std': -1 })
             #logger.debug('Removed %d empty step(s) from secondary path to %s.' % (count, remoteaddress))
 	    logger.info('sending ping/trace data about [%s]: %s ' % (remoteaddress,  self.send_to_srv(active_data)))
-        
+	    #outfile.write(json.dumps(active_data) + "\n")
+	outfile.close()
+	            
         for sent_sid in sids:
             update_query = '''update %s set sent = 't' where sid = %d''' % ( self.activetable, int(sent_sid) )
             self.db.execute_update(update_query)

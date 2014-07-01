@@ -57,9 +57,9 @@ class LocalDiagnosisManager():
             ''' % (self.dbconn.get_table_names()['raw'], sid)
         
         if full_load_time:
-            q += ' and full_load_time > -1)t'
+            q += ' and full_load_time > -1)t ORDER BY obj_start'
         else:
-            q += ')t'
+            q += ')t ORDER BY obj_start'
         
         res = self.dbconn.execute_query(q)
         return res

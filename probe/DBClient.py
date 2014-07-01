@@ -75,7 +75,7 @@ class DBClient:
         cursor = self.conn.cursor()
         cursor.execute('''CREATE TABLE IF NOT EXISTS %s (host TEXT, uri TEXT, 
         request_ts TIMESTAMP, content_type TEXT, content_len INT4,  
-        keep_alive TEXT, httpid INT8, session_start TIMESTAMP, session_url TEXT, cache INT4, 
+        httpid INT8, session_start TIMESTAMP, session_url TEXT, cache INT4, 
         local_ip INET, local_port INT4, remote_ip INET, remote_port INT4, response_code INT4, get_bytes INT4, 
         header_bytes INT4, body_bytes INT4, cache_bytes INT4, dns_start TIMESTAMP, dns_time INT4, syn_start TIMESTAMP, 
         syn_time INT4, is_sent INT4, get_sent_ts TIMESTAMP, first_bytes_rcv TIMESTAMP, app_rtt INT4, end_time TIMESTAMP, 
@@ -97,7 +97,7 @@ class DBClient:
 	    if obj.has_key("session_url"):
 	    	mem_perc = stats[str(obj["session_url"])]['mem']
                 cpu_perc = stats[str(obj["session_url"])]['cpu']
-             	state = '''INSERT INTO %s VALUES ('%s', '%s', '%s', '%s', %d, '%s', %d, '%s', 
+             	state = '''INSERT INTO %s VALUES ('%s', '%s', '%s', '%s', %d, %d, '%s', 
             	'%s', %d, '%s', %d, '%s', %d, %d, %d, %d, %d, %d, '%s', %d, '%s', %d, %d, '%s', '%s', %d, '%s', %d,
                     %d, %d, '%s', '%s', '%s', '%s', %d, %d)
                     ''' % (self.dbconfig['rawtable'], str(obj["host"]),\

@@ -43,7 +43,7 @@ Date.prototype.toISOLocalDateTimeString = function() {
       offset = "-" + padDigits(offsetHours.toString().replace("-","") + "00",4);
     else if (offsetHours > 0) 
       offset = "+" + padDigits(offsetHours  + "00", 4);
-
+    function ms(n) { return n < 10 ? '00'+ n : n < 100 ? '0' + n : n }
     return this.getFullYear() 
             + "-" + padDigits((this.getUTCMonth()+1),2) 
             + "-" + padDigits(this.getUTCDate(),2) 
@@ -51,7 +51,7 @@ Date.prototype.toISOLocalDateTimeString = function() {
             + padDigits(this.getUTCHours()-(offsetHours),2)
             + ":" + padDigits(this.getUTCMinutes(),2)
             + ":" + padDigits(this.getUTCSeconds(),2)
-            + "." + padDigits(this.getUTCMilliseconds(),2)
+            + "." + ms(this.getUTCMilliseconds(),2)
             + offset;
 
 }
