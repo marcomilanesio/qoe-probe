@@ -19,7 +19,7 @@ if __name__ == '__main__':
     backupdir = sys.argv[3]
     logger = logging.getLogger('probe')
     config = Configuration(conf_file)
-    '''
+
     plugin_out_file = config.get_database_configuration()['pluginoutfile']
     logger.debug('Backup dir set at: %s' % backupdir)
     ff_launcher = FFLauncher(config)
@@ -46,6 +46,6 @@ if __name__ == '__main__':
             if tracefile.endswith('.traceroute'):
                 new_fn_trace = backupdir + '/' + tracefile + '.run%d' % i
                 os.rename(tracefile, new_fn_trace)
-    '''
+
     jc = JSONClient(config)
     jc.prepare_and_send()
