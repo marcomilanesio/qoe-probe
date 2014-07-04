@@ -58,7 +58,7 @@ class DBClient:
         httpid INT,
         session_start TIMESTAMP,
         session_url TEXT,
-        cache BOOLEAN,
+        cache INT,
         local_ip TEXT,
         local_port INT,
         remote_ip TEXT,

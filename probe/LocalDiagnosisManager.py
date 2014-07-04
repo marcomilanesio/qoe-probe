@@ -62,7 +62,7 @@ class LocalDiagnosisManager():
             when get_sent_ts>'1970-01-01 12:00:00' then get_sent_ts else request_ts end as obj_start,
             case when end_time>'1970-01-01 12:00:00' then end_time
             when first_bytes_rcv>'1970-01-01 12:00:00' then first_bytes_rcv else request_ts end as obj_end,
-            httpid, host from %s where sid=%d and cache is FALSE
+            httpid, host from %s where sid=%d and cache = 0
             ''' % (self.dbconn.get_table_names()['raw'], sid)
         
         if full_load_time:

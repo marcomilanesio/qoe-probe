@@ -49,15 +49,15 @@ class Ping(Measure):
     def run(self):
         ping = subprocess.Popen(self.cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         out, error = ping.communicate()
-	rttmin = rttavg = rttmax = rttmdev = -1.0
-	out_ping = out.strip().split('\n')[-1].split(' = ')
-	if len(out_ping)>1:
+        rttmin = rttavg = rttmax = rttmdev = -1.0
+        out_ping = out.strip().split('\n')[-1].split(' = ')
+        if len(out_ping) > 1:
             res = out_ping[1].split()[0]
             try:
-            	rttmin, rttavg, rttmax, rttmdev = map(float, res.strip().split("/"))
-            	logger.info('rtts - %.3f, %.3f, %.3f, %.3f' % (rttmin, rttavg, rttmax, rttmdev) )
+                rttmin, rttavg, rttmax, rttmdev = map(float, res.strip().split("/"))
+                logger.info('rtts - %.3f, %.3f, %.3f, %.3f' % (rttmin, rttavg, rttmax, rttmdev))
             except ValueError:
-            	logger.error('Unable to map float in do_ping [%s]' % out.strip())
+                logger.error('Unable to map float in do_ping [%s]' % out.strip())
         self.result = json.dumps({'min': rttmin, 'max':rttmax, 'avg':rttavg, 'std':rttmdev})
 
 
@@ -152,6 +152,7 @@ class Monitor(object):
             url = dic['url']
             ip_addrs = dic['address']
             for ip in ip_addrs:
+                found = False
                 if ip not in probed_ip.keys():
                     probed_ip[ip] = []
                 probed_ip[ip].append(sid)
@@ -165,6 +166,7 @@ class Monitor(object):
                     logger.debug('Ping for IP [%s] : %s' % (ip, str(ping)))
                     trace = tot[c_sid][0]['trace']
                     logger.debug('Trace for IP [%s] : %s' % (ip, str(trace)))
+                    found = True
                 else:
                     c_sid = sid
                     ping = Ping(ip)
@@ -175,7 +177,12 @@ class Monitor(object):
                     trace.run()
 
                 logger.debug('current %d, inserted from %d' % (sid, c_sid))
-                tot[sid].append({'url': url, 'ip': ip, 'ping': ping.get_result(), 'trace': trace.get_result()})
+
+                if not found:
+                    tot[sid].append({'url': url, 'ip': ip, 'ping': ping.get_result(), 'trace': trace.get_result()})
+                else:
+                    tot[sid].append({'url': url, 'ip': ip, 'ping': ping, 'trace': trace})
+
                 probed_ip[ip].append(sid)
                 logger.info('Computed Active Measurement for %s in session %d' % (ip, sid))
 
