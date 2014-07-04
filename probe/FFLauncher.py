@@ -46,7 +46,7 @@ class BrowserThread(threading.Thread):
             e = open(self.errfile, 'a')
             logger.debug('Browsing Thread started')
             FNULL = open(os.devnull, 'w')
-            self.process = subprocess.Popen(self.cmd, stdout=FNULL, stderr=FNULL, shell=True)
+            self.process = subprocess.Popen(self.cmd, stdout=FNULL, stderr=e, shell=True)
             memtable = []
             cputable = []
             while self.process.poll() is None:
@@ -54,13 +54,12 @@ class BrowserThread(threading.Thread):
                 cputable.append(sum(arr) / float(len(arr)))
                 memtable.append(psutil.virtual_memory().percent)
                 time.sleep(1)
-            if self.process.poll() == 0:
-                self.mem = float(sum(memtable) / len(memtable))
-                self.cpu = float(sum(cputable) / len(cputable))
-                #print 'mem = %.2f, cpu = %.2f' % (mem, cpu)
-            else:
-                logger.error('Browsing thread mem and cpu not set')
-            
+            #if self.process.poll() == 0:
+            self.mem = float(sum(memtable) / len(memtable))
+            self.cpu = float(sum(cputable) / len(cputable))
+            #print 'mem = %.2f, cpu = %.2f' % (self.mem, self.cpu)
+            #else:
+                #logger.error('Browsing thread mem and cpu not set')            
             logger.debug('Browsing Thread finished')
             o.close()
             e.close()

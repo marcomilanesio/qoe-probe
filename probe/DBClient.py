@@ -78,7 +78,7 @@ class DBClient:
         end_time TIMESTAMP,
         rcv_time INT,
         full_load_time INT,
-        annoy BOOLEAN,
+        annoy INT,
         tab_id TEXT,
         cpu_percent INT,
         mem_percent INT,
